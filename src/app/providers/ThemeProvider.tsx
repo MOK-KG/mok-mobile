@@ -9,6 +9,14 @@ import { colorScheme, vars } from 'nativewind';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { brand, defaultTheme, type ThemeName, themes, themeVars } from '@/shared/config/tokens';
+import { storage } from '@/shared/lib/storage';
+
+const THEME_KEY = 'nok.theme';
+
+const readTheme = (): ThemeName => {
+  const saved = storage.get(THEME_KEY);
+  return saved === 'dark' || saved === 'light' ? saved : defaultTheme;
+};
 
 type ThemeContextValue = {
   theme: ThemeName;
@@ -53,11 +61,12 @@ const navigationThemes: Record<ThemeName, NavigationTheme> = {
 };
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<ThemeName>(defaultTheme);
+  const [theme, setTheme] = useState<ThemeName>(readTheme);
 
   useEffect(() => {
     // включает вариант dark: в классах NativeWind
     colorScheme.set(theme);
+    storage.set(THEME_KEY, theme);
   }, [theme]);
 
   const value = useMemo(

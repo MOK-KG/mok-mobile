@@ -11,6 +11,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { AppProviders } from '@/app/providers';
+import { useSession } from '@/features/auth';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -22,19 +23,46 @@ export default function RootLayout() {
     Inter_700Bold,
   });
 
-  const ready = fontsLoaded || fontError !== null;
-
-  useEffect(() => {
-    if (ready) SplashScreen.hideAsync();
-  }, [ready]);
-
-  if (!ready) return null;
+  if (!fontsLoaded && fontError === null) return null;
 
   return (
     <AppProviders>
-      <Stack
-        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent' } }}
-      />
+      <RootNavigator />
     </AppProviders>
+  );
+}
+
+/**
+ * Доступ к экранам по статусу сессии: без сессии — только вход, без роли — только
+ * «Аккаунт на проверке», с ролью — приложение. Прямые ссылки на закрытые экраны не открываются.
+ */
+function RootNavigator() {
+  const session = useSession();
+  const status = session.data?.status ?? 'guest';
+
+  useEffect(() => {
+    if (!session.isPending) SplashScreen.hideAsync();
+  }, [session.isPending]);
+
+  if (session.isPending) return null;
+
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: 'fade',
+        contentStyle: { backgroundColor: 'transparent' },
+      }}
+    >
+      <Stack.Protected guard={status === 'guest'}>
+        <Stack.Screen name="login" />
+      </Stack.Protected>
+      <Stack.Protected guard={status === 'pending'}>
+        <Stack.Screen name="pending" />
+      </Stack.Protected>
+      <Stack.Protected guard={status === 'active'}>
+        <Stack.Screen name="index" />
+      </Stack.Protected>
+    </Stack>
   );
 }

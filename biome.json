@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!.expo", "!android", "!ios"]
+    "includes": ["**", "!.expo", "!android", "!ios", "!**/assets/**/*.svg"]
   },
   "formatter": {
     "enabled": true,
