@@ -33,6 +33,8 @@ export function mockSessionFor(status: Session['status'], role: RoleCode): Sessi
     user: {
       email: 'a.duysheyev@olympic.kg',
       name: 'Айбек Дуйшеев',
+      position: 'Ген. секретарь',
+      department: 'Административный департамент',
       roles: status === 'active' ? [role] : [],
       permissions: status === 'active' ? mockRoleMatrix[role] : [],
     },

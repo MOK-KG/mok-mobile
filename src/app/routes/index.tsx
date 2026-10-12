@@ -10,9 +10,12 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const session = useSession();
   const signOut = useSignOut();
-  const { can } = useCan();
+  const { canOpen } = useCan();
   const user = session.data?.user;
-  const allowed = (Object.keys(sections) as Section[]).filter((s) => can(sections[s]));
+  // Рабочий стол — это сам этот экран
+  const allowed = (Object.keys(sections) as Section[]).filter(
+    (s) => s !== 'dashboard' && canOpen(s),
+  );
 
   return (
     <SafeAreaView className="flex-1 gap-4 bg-canvas p-4">
