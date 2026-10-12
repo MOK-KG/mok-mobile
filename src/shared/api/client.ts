@@ -2,7 +2,7 @@
  * HTTP-клиент. Типы API будут генерироваться из OpenAPI командой `pnpm api:sync`
  * в src/shared/api/schema.d.ts, когда появится бэкенд.
  */
-const baseUrl = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000';
+const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
 
 export class ApiError extends Error {
   readonly status: number;

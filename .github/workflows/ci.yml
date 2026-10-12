@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, typecheck, bundle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      # Только предупреждение: новые патчи Expo выходят без изменений в нашем коде.
+      # Обновление: npx expo install --fix
+      - name: Expo doctor
+        run: npx expo-doctor
+        continue-on-error: true
+      # Сборка JS-бандла ловит ошибки Metro/NativeWind без нативной сборки
+      - name: Bundle iOS and Android
+        run: npx expo export --platform ios --platform android --output-dir dist
+        env:
+          CI: 1
