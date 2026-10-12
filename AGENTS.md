@@ -25,7 +25,7 @@ Run lint and typecheck before declaring any task done.
 
 ## Navigation & Routing
 
-- Use **Expo Router** for all navigation. Routes live in `src/app/routes/` (set via the `root` option of the expo-router plugin in app.json) — every file there is a screen, `_layout.tsx` files define navigators. Providers live in `src/app/providers/`. Keep non-route code out of `src/app/routes/`.
+- Use **Expo Router** for all navigation. Routes live in `src/app/routes/` (set via the `root` option of the expo-router plugin in app.config.ts) — every file there is a screen, `_layout.tsx` files define navigators. Providers live in `src/app/providers/`. Keep non-route code out of `src/app/routes/`.
 - Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
 - Docs: https://docs.expo.dev/router/introduction.md
 
@@ -36,6 +36,6 @@ Docs: https://docs.expo.dev/eas/index.md
 
 ## Rules
 
-- If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
+- If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.config.ts` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md

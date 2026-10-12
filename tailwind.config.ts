@@ -28,8 +28,8 @@ export default {
     spacing: tailwindSpacing,
     fontWeight: fontWeights,
     fontFamily: {
-      // font-medium / font-semibold / font-bold задают и вес, и нужный файл шрифта
-      sans: [inter.regular],
+      // font-regular / font-medium / font-semibold / font-bold задают и вес, и файл шрифта.
+      // font-sans нет намеренно: на iOS семейство без веса не подхватывается
       regular: [inter.regular],
       medium: [inter.medium],
       semibold: [inter.semibold],

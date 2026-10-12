@@ -1,8 +1,14 @@
+import {
+  DarkTheme,
+  DefaultTheme,
+  type Theme as NavigationTheme,
+  ThemeProvider as NavigationThemeProvider,
+} from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { colorScheme, vars } from 'nativewind';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { defaultTheme, type ThemeName, themes, themeVars } from '@/shared/config/tokens';
+import { brand, defaultTheme, type ThemeName, themes, themeVars } from '@/shared/config/tokens';
 
 type ThemeContextValue = {
   theme: ThemeName;
@@ -16,6 +22,34 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 const themeStyles = {
   dark: vars(themeVars('dark')),
   light: vars(themeVars('light')),
+};
+
+// Тема навигатора из токенов — иначе React Navigation рисует свой фон поверх canvas
+const navigationThemes: Record<ThemeName, NavigationTheme> = {
+  dark: {
+    ...DarkTheme,
+    colors: {
+      ...DarkTheme.colors,
+      primary: brand['brand-red'],
+      background: themes.dark.canvas,
+      card: themes.dark.panel,
+      text: themes.dark.text,
+      border: themes.dark.surface,
+      notification: themes.dark.danger,
+    },
+  },
+  light: {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      primary: brand['brand-red'],
+      background: themes.light.canvas,
+      card: themes.light.panel,
+      text: themes.light.text,
+      border: themes.light.surface,
+      notification: themes.light.danger,
+    },
+  },
 };
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -38,8 +72,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   return (
     <ThemeContext.Provider value={value}>
       <View style={[{ flex: 1, backgroundColor: themes[theme].canvas }, themeStyles[theme]]}>
-        <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
-        {children}
+        <NavigationThemeProvider value={navigationThemes[theme]}>
+          <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+          {children}
+        </NavigationThemeProvider>
       </View>
     </ThemeContext.Provider>
   );

@@ -48,7 +48,7 @@ export default function HomeScreen() {
               onPress={() => i18n.changeLanguage(lng)}
               className={`rounded-8 px-3 py-2 ${active ? 'bg-brand-red' : 'bg-surface'}`}
             >
-              <Text className={active ? 'font-medium text-[#FFFFFF]' : 'font-sans text-sub'}>
+              <Text className={active ? 'font-medium text-[#FFFFFF]' : 'font-regular text-sub'}>
                 {languageLabels[lng]}
               </Text>
             </Pressable>
@@ -58,14 +58,14 @@ export default function HomeScreen() {
 
       <View className="gap-2 rounded-18 bg-card p-6">
         <Text className="text-lg font-medium text-text">{t('demo.greeting')}</Text>
-        <Text className="font-sans text-sub">
+        <Text className="font-regular text-sub">
           {t('demo.today', { date: formatDate(new Date(), 'd MMMM yyyy', i18n.language) })}
         </Text>
         <View className="mt-4 flex-row flex-wrap gap-2">
-          <Text className="rounded-6 bg-surface px-2 py-1 font-sans text-success">success</Text>
-          <Text className="rounded-6 bg-surface px-2 py-1 font-sans text-warning">warning</Text>
-          <Text className="rounded-6 bg-surface px-2 py-1 font-sans text-danger">danger</Text>
-          <Text className="rounded-6 bg-surface px-2 py-1 font-sans text-info">info</Text>
+          <Text className="rounded-6 bg-surface px-2 py-1 font-regular text-success">success</Text>
+          <Text className="rounded-6 bg-surface px-2 py-1 font-regular text-warning">warning</Text>
+          <Text className="rounded-6 bg-surface px-2 py-1 font-regular text-danger">danger</Text>
+          <Text className="rounded-6 bg-surface px-2 py-1 font-regular text-info">info</Text>
         </View>
       </View>
     </SafeAreaView>
