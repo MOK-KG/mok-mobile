@@ -42,6 +42,15 @@ Reanimated, expo-secure-store, expo-auth-session, expo-notifications, Biome. М�
 
 Если показываешь «найдено N», N должно совпадать с тем, что видно.
 
+## Права доступа
+
+- Проверяй права, а не роли: `useCan().can('tasks.create')`, `<Can permission>`, `RequirePermission`.
+  Права приходят в сессии с бэкенда; список — `src/shared/config/permissions.ts`
+- Раздел без права по прямой ссылке — экран 403 (`RequirePermission`), не пустой список и не редирект
+- Смена роли — без перезапуска: сессия обновляется при фокусе, раз в минуту и после любого 403
+- Не добавляй права на удаление журнала, сотрудников, задач, документов — их нет намеренно
+- Матрица ролей в `permissions.ts` — заглушка для mock, настоящая на бэкенде (`../docs/roli.md`)
+
 ## Удаление
 
 Почти ничего нельзя удалять:
@@ -89,7 +98,7 @@ Reanimated, expo-secure-store, expo-auth-session, expo-notifications, Biome. М�
 - Типы API генерируются из OpenAPI командой `pnpm api:sync`, руками не пишутся
 - Токены из `src/shared/config/tokens.ts`, цвета в коде не хардкодятся
 - Продублированы в web и mobile и должны совпадать побайтно — правь оба:
-  `shared/config/{tokens,i18n,links,workCalendar}.ts`, `shared/lib/{workDays,date}.ts`, `locales/*.json`.
+  `shared/config/{tokens,i18n,links,workCalendar,permissions}.ts`, `shared/lib/{workDays,date}.ts`, `locales/*.json`.
   Тесты общих файлов живут в web
 - Тексты интерфейса только через i18next, ключи во всех трёх файлах `src/locales/` (ru, ky, en)
 
