@@ -62,6 +62,7 @@ function RootNavigator() {
       </Stack.Protected>
       <Stack.Protected guard={status === 'active'}>
         <Stack.Screen name="index" />
+        <Stack.Screen name="tasks" />
         <Stack.Screen name="[section]" />
       </Stack.Protected>
     </Stack>

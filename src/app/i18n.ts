@@ -1,3 +1,8 @@
+// Hermes не полностью поддерживает Intl.PluralRules: без полифила «20 задачи» вместо «20 задач»
+import '@formatjs/intl-pluralrules/polyfill-force.js';
+import '@formatjs/intl-pluralrules/locale-data/ru.js';
+import '@formatjs/intl-pluralrules/locale-data/ky.js';
+import '@formatjs/intl-pluralrules/locale-data/en.js';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import en from '@/locales/en.json';
