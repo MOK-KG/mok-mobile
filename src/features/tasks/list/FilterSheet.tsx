@@ -5,8 +5,17 @@ import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { themes } from '@/shared/config/tokens';
+import { toast } from '@/shared/lib/toast';
 import { CheckboxCheckIcon, XIcon } from '@/shared/ui/icons';
-import { type DueFilter, dueFilters, matchesDue, type TaskFilters } from '../filters';
+import { Tooltip } from '@/shared/ui/Tooltip';
+import {
+  type DueFilter,
+  dueFilters,
+  emptyFilters,
+  hasFilters,
+  matchesDue,
+  type TaskFilters,
+} from '../filters';
 import type { Project, Task } from '../types';
 import { toneClasses } from '../ui';
 
@@ -25,7 +34,10 @@ type Props = {
   countWith: (f: TaskFilters) => number;
 };
 
-/** Шторка фильтра (макет Figma: «Мобильный фильтр»). Кнопка показывает число задач */
+/**
+ * Шторка фильтра (макет Figma: «Мобильный фильтр»). Кнопка показывает число задач.
+ * Если применили пустой фильтр вместо прежнего — тост с «Вернуть»: набор собирали руками
+ */
 export function FilterSheet({ sheetRef, tasks, value, onApply, countWith }: Props) {
   const { t } = useTranslation();
   const { theme } = useTheme();
@@ -83,6 +95,8 @@ export function FilterSheet({ sheetRef, tasks, value, onApply, countWith }: Prop
   return (
     <BottomSheetModal
       ref={sheetRef}
+      // По умолчанию шторка — один элемент для диктора, и флажки внутри недоступны
+      accessible={false}
       snapPoints={['88%']}
       enableDynamicSizing={false}
       backdropComponent={(p) => (
@@ -96,15 +110,17 @@ export function FilterSheet({ sheetRef, tasks, value, onApply, countWith }: Prop
         <Text className="font-semibold text-[17px] tracking-[-0.3px] text-text">
           {t('tasks.filter')}
         </Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('taskCard.close')}
-          onPress={() => sheetRef.current?.dismiss()}
-          hitSlop={8}
-          className="size-7 items-center justify-center rounded-[7px]"
-        >
-          <XIcon size={16} color={palette.faint} />
-        </Pressable>
+        <Tooltip content={t('taskCard.close')}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('taskCard.close')}
+            onPress={() => sheetRef.current?.dismiss()}
+            hitSlop={8}
+            className="size-7 items-center justify-center rounded-[7px]"
+          >
+            <XIcon size={16} color={palette.faint} />
+          </Pressable>
+        </Tooltip>
       </View>
       <BottomSheetScrollView>
         <Text className={section}>{t('tasks.filterProject')}</Text>
@@ -134,7 +150,7 @@ export function FilterSheet({ sheetRef, tasks, value, onApply, countWith }: Prop
       >
         <Pressable
           accessibilityRole="button"
-          onPress={() => setDraft({ projects: [], due: [] })}
+          onPress={() => setDraft(emptyFilters)}
           className="h-11 items-center justify-center rounded-[10px] border border-line px-4"
         >
           <Text className="font-medium text-[13px] text-sub">{t('tasks.reset')}</Text>
@@ -142,8 +158,15 @@ export function FilterSheet({ sheetRef, tasks, value, onApply, countWith }: Prop
         <Pressable
           accessibilityRole="button"
           onPress={() => {
+            const previous = value;
             onApply(draft);
             sheetRef.current?.dismiss();
+            if (hasFilters(previous) && !hasFilters(draft)) {
+              toast.info({
+                title: t('tasks.filtersCleared'),
+                action: { label: t('tasks.undo'), onPress: () => onApply(previous) },
+              });
+            }
           }}
           className="h-11 flex-1 items-center justify-center rounded-[10px] bg-brand-red active:opacity-80"
         >

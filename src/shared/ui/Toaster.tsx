@@ -23,7 +23,7 @@ const HEADER_HEIGHT = 52;
 /**
  * Тосты сверху экрана, под шапкой. Подключён один раз в AppProviders;
  * показывать — через toast.success(...) / toast.error(...) из shared/lib/toast или meta мутации.
- * Нажатие на тост закрывает его.
+ * Закрыть — крестиком; действие (например, «Вернуть») — отдельная кнопка справа.
  */
 export function Toaster() {
   const toasts = useToasts();
@@ -73,17 +73,17 @@ function ToastItem({ toast }: { toast: Toast }) {
         elevation: 8,
       }}
     >
-      <Pressable
-        accessibilityRole={toast.tone === 'error' ? 'alert' : 'summary'}
-        accessibilityHint={t('toast.close')}
-        onPress={() => toastApi.dismiss(toast.id)}
-        className="relative flex-row items-start gap-[10px] overflow-hidden rounded-12 border border-line bg-popover py-3 pl-[15px] pr-[10px]"
-      >
+      {/* Не одна большая кнопка: иначе диктор не доберётся до «Вернуть» отдельно */}
+      <View className="relative flex-row items-start gap-[10px] overflow-hidden rounded-12 border border-line bg-popover py-3 pl-[15px] pr-[6px]">
         <View className={`absolute bottom-0 left-0 top-0 w-[3px] ${tone.stripe}`} />
         <View className="mt-px">
           <tone.Icon size={16} color={palette[tone.color]} />
         </View>
-        <View className="min-w-0 flex-1">
+        <View
+          accessible
+          accessibilityRole={toast.tone === 'error' ? 'alert' : 'summary'}
+          className="min-w-0 flex-1"
+        >
           <Text className="font-medium text-[13px] leading-[18px] tracking-[-0.1px] text-text">
             {toast.title}
           </Text>
@@ -92,24 +92,30 @@ function ToastItem({ toast }: { toast: Toast }) {
               {toast.text}
             </Text>
           )}
-          {toast.action && (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => {
-                toast.action?.onPress();
-                toastApi.dismiss(toast.id);
-              }}
-              hitSlop={6}
-              className="mt-[6px] self-start"
-            >
-              <Text className="font-semibold text-[12.5px] text-info">{toast.action.label}</Text>
-            </Pressable>
-          )}
         </View>
-        <View className="size-6 items-center justify-center">
+        {toast.action && (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              toast.action?.onPress();
+              toastApi.dismiss(toast.id);
+            }}
+            hitSlop={8}
+            className="h-6 justify-center rounded-6 px-2 active:opacity-70"
+          >
+            <Text className="font-semibold text-[13px] text-info">{toast.action.label}</Text>
+          </Pressable>
+        )}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('toast.close')}
+          onPress={() => toastApi.dismiss(toast.id)}
+          hitSlop={8}
+          className="size-6 items-center justify-center rounded-6"
+        >
           <XIcon size={14} color={palette.faint} />
-        </View>
-      </Pressable>
+        </Pressable>
+      </View>
     </Animated.View>
   );
 }
