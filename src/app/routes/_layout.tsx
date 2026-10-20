@@ -47,22 +47,21 @@ function RootNavigator() {
   if (session.isPending) return null;
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        animation: 'fade',
-        contentStyle: { backgroundColor: 'transparent' },
-      }}
-    >
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent' } }}>
       <Stack.Protected guard={status === 'guest'}>
-        <Stack.Screen name="login" />
+        <Stack.Screen name="login" options={{ animation: 'fade' }} />
       </Stack.Protected>
       <Stack.Protected guard={status === 'pending'}>
-        <Stack.Screen name="pending" />
+        <Stack.Screen name="pending" options={{ animation: 'fade' }} />
       </Stack.Protected>
+      {/* Вкладки внизу; карточка задачи, формы, очередь и уведомления открываются поверх них */}
       <Stack.Protected guard={status === 'active'}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="tasks" />
+        <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+        <Stack.Screen name="tasks/[id]" />
+        <Stack.Screen name="tasks/new" />
+        <Stack.Screen name="tasks/queue" />
+        <Stack.Screen name="tasks/letter/[id]" />
+        <Stack.Screen name="notifications" />
         <Stack.Screen name="[section]" />
       </Stack.Protected>
     </Stack>

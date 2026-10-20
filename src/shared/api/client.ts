@@ -1,25 +1,13 @@
+import { createApiClient } from './request';
+
 /**
- * HTTP-клиент. Типы API будут генерироваться из OpenAPI командой `pnpm api:sync`
+ * HTTP-клиент мобильного приложения: токен сессии передаёт сам вызов
+ * (заголовок Authorization, см. features/auth/api.ts).
+ * Типы API будут генерироваться из OpenAPI командой `pnpm api:sync`
  * в src/shared/api/schema.d.ts, когда появится бэкенд.
  */
-const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+export const api = createApiClient({
+  baseUrl: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000',
+});
 
-export class ApiError extends Error {
-  readonly status: number;
-
-  constructor(status: number, message: string) {
-    super(message);
-    this.status = status;
-  }
-}
-
-export const apiUrl = (path: string) => `${baseUrl}${path}`;
-
-export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(apiUrl(path), {
-    ...init,
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
-  });
-  if (!res.ok) throw new ApiError(res.status, res.statusText);
-  return res.status === 204 ? (undefined as T) : res.json();
-}
+export { ApiError } from './errors';

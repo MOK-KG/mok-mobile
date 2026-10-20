@@ -1,6 +1,6 @@
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
-import { ApiError, apiFetch, apiUrl } from '@/shared/api/client';
+import { ApiError, api } from '@/shared/api/client';
 import { storage } from '@/shared/lib/storage';
 import { mockApi, mockOutcome } from './mock';
 import type { Session, SignInError, SignInResult } from './types';
@@ -22,7 +22,7 @@ export const authApi = {
     if (mockOutcome()) return mockApi.getSession();
     if (!storage.get(TOKEN_KEY)) return null;
     try {
-      return await apiFetch<Session>('/auth/me', { headers: authHeaders() });
+      return await api.get<Session>('/auth/me', { headers: authHeaders() });
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         storage.remove(TOKEN_KEY);
@@ -38,7 +38,7 @@ export const authApi = {
 
     const returnTo = Linking.createURL('auth');
     const result = await WebBrowser.openAuthSessionAsync(
-      apiUrl(`/auth/google/start?returnTo=${encodeURIComponent(returnTo)}`),
+      api.url('/auth/google/start', { returnTo }),
       returnTo,
     );
     if (result.type !== 'success') return { ok: false, cancelled: true };
@@ -55,7 +55,7 @@ export const authApi = {
   async signOut(): Promise<void> {
     if (mockOutcome()) return mockApi.signOut();
     try {
-      await apiFetch<void>('/auth/logout', { method: 'POST', headers: authHeaders() });
+      await api.post<void>('/auth/logout', undefined, { headers: authHeaders() });
     } finally {
       storage.remove(TOKEN_KEY);
     }

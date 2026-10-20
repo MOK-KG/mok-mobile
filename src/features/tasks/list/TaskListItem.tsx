@@ -1,6 +1,6 @@
 import type { ComponentType, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { themes } from '@/shared/config/tokens';
 import { formatIsoDate } from '@/shared/lib/date';
@@ -15,15 +15,9 @@ import {
   SubtasksIcon,
 } from '@/shared/ui/icons';
 import { urgencyOf } from '../deadline';
-import type { Task, TaskStatus } from '../types';
+import { statusChip } from '../parts';
+import type { Task } from '../types';
 import { toneClasses } from '../ui';
-
-const statusChip: Record<TaskStatus, string> = {
-  queue: 'bg-chip text-chip-text',
-  in_progress: 'bg-info-chip text-info',
-  review: 'bg-warning-chip text-warning-text',
-  done: 'bg-tone-green-bg text-tone-green',
-};
 
 function Chip({ className, children }: { className: string; children: ReactNode }) {
   return (
@@ -36,7 +30,7 @@ function Chip({ className, children }: { className: string; children: ReactNode 
 }
 
 /** Строка задачи в мобильном списке (макет Figma: task/*) */
-export function TaskListItem({ task }: { task: Task }) {
+export function TaskListItem({ task, onPress }: { task: Task; onPress: () => void }) {
   const { t, i18n } = useTranslation();
   const { theme } = useTheme();
   const palette = themes[theme];
@@ -76,10 +70,11 @@ export function TaskListItem({ task }: { task: Task }) {
   );
 
   return (
-    <View
-      accessible
+    <Pressable
+      accessibilityRole="button"
       accessibilityLabel={task.title}
-      className="relative bg-panel px-4 pb-[14px] pt-[10px]"
+      onPress={onPress}
+      className="relative bg-panel px-4 pb-[14px] pt-[10px] active:bg-row-highlight"
     >
       {stripe && <View className={`absolute bottom-0 left-0 top-0 w-[3px] ${stripe}`} />}
       <View className="flex-row items-center gap-[5px]">
@@ -143,6 +138,6 @@ export function TaskListItem({ task }: { task: Task }) {
           </View>
         )}
       </View>
-    </View>
+    </Pressable>
   );
 }

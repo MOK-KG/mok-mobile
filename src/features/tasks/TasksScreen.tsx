@@ -3,17 +3,19 @@ import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { Can } from '@/features/auth';
 import { themes } from '@/shared/config/tokens';
-import { FilterIcon, MenuIcon, PlusIcon, SearchIcon, XIcon } from '@/shared/ui/icons';
+import { FilterIcon, PlusIcon, SearchIcon, XIcon } from '@/shared/ui/icons';
+import { Tooltip } from '@/shared/ui/Tooltip';
 import { useTasks } from './api';
 import { applyFilters, emptyFilters, hasFilters, type TaskFilters } from './filters';
 import { matchesQuick, type QuickFilter, quickFilters, sortForList } from './list';
 import { FilterSheet } from './list/FilterSheet';
 import { TaskListItem } from './list/TaskListItem';
+import { QueueBanner } from './queue/QueueBanner';
 
 /** Раздел «Задачи» на мобильном: список вместо доски (макет Figma: «Мобильный список») */
 export function TasksScreen() {
@@ -39,15 +41,6 @@ export function TasksScreen() {
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
       <View className="h-[52px] flex-row items-center gap-2 border-b border-line bg-panel px-4">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('tasks.openMenu')}
-          onPress={() => router.navigate('/')}
-          hitSlop={8}
-          className="size-7 items-center justify-center rounded-[7px]"
-        >
-          <MenuIcon size={16} color={palette.sub} />
-        </Pressable>
         {searching ? (
           <TextInput
             autoFocus
@@ -61,36 +54,40 @@ export function TasksScreen() {
         ) : (
           <Text
             accessibilityRole="header"
-            className="ml-1 flex-1 font-semibold text-[17px] tracking-[-0.3px] text-text"
+            className="flex-1 font-semibold text-[17px] tracking-[-0.3px] text-text"
           >
             {t('sections.tasks')}
           </Text>
         )}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={searching ? t('tasks.closeSearch') : t('tasks.search')}
-          onPress={() => {
-            if (searching) setSearch('');
-            setSearching((s) => !s);
-          }}
-          hitSlop={8}
-          className="size-7 items-center justify-center rounded-[7px]"
-        >
-          {searching ? (
-            <XIcon size={16} color={palette.sub} />
-          ) : (
-            <SearchIcon size={16} color={palette.sub} />
-          )}
-        </Pressable>
-        <Can permission="tasks.create">
+        <Tooltip content={searching ? t('tasks.closeSearch') : t('tasks.search')}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={t('tasks.newTask')}
-            onPress={() => Alert.alert(t('tasks.newTask'), t('tasks.comingSoon'))}
-            className="size-7 items-center justify-center rounded-8 bg-brand-red active:opacity-80"
+            accessibilityLabel={searching ? t('tasks.closeSearch') : t('tasks.search')}
+            onPress={() => {
+              if (searching) setSearch('');
+              setSearching((s) => !s);
+            }}
+            hitSlop={8}
+            className="size-7 items-center justify-center rounded-[7px]"
           >
-            <PlusIcon size={16} color="#FFFFFF" />
+            {searching ? (
+              <XIcon size={16} color={palette.sub} />
+            ) : (
+              <SearchIcon size={16} color={palette.sub} />
+            )}
           </Pressable>
+        </Tooltip>
+        <Can permission="tasks.create">
+          <Tooltip content={t('tasks.newTask')}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('tasks.newTask')}
+              onPress={() => router.push('/tasks/new')}
+              className="size-7 items-center justify-center rounded-8 bg-brand-red active:opacity-80"
+            >
+              <PlusIcon size={16} color="#FFFFFF" />
+            </Pressable>
+          </Tooltip>
         </Can>
       </View>
 
@@ -100,16 +97,18 @@ export function TasksScreen() {
         className="max-h-12 grow-0"
         contentContainerClassName="items-center gap-[7px] px-4 py-[10px]"
       >
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('tasks.filter')}
-          onPress={() => sheet.current?.present()}
-          className={`h-7 w-[34px] items-center justify-center rounded-8 border ${
-            hasFilters(filters) ? 'border-info bg-control-active' : 'border-line bg-panel'
-          }`}
-        >
-          <FilterIcon size={16} color={hasFilters(filters) ? palette.text : palette.sub} />
-        </Pressable>
+        <Tooltip content={t('tasks.filter')}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('tasks.filter')}
+            onPress={() => sheet.current?.present()}
+            className={`h-7 w-[34px] items-center justify-center rounded-8 border ${
+              hasFilters(filters) ? 'border-info bg-control-active' : 'border-line bg-panel'
+            }`}
+          >
+            <FilterIcon size={16} color={hasFilters(filters) ? palette.text : palette.sub} />
+          </Pressable>
+        </Tooltip>
         {quickFilters.map((q) => {
           const active = q === quick;
           const count = applyFilters(all, filters, search).filter((task) =>
@@ -140,10 +139,16 @@ export function TasksScreen() {
         })}
       </ScrollView>
 
+      <Can permission="tasks.create">
+        <QueueBanner />
+      </Can>
+
       <FlashList
         data={visible}
         keyExtractor={(task) => task.id}
-        renderItem={({ item }) => <TaskListItem task={item} />}
+        renderItem={({ item }) => (
+          <TaskListItem task={item} onPress={() => router.push(`/tasks/${item.id}`)} />
+        )}
         ItemSeparatorComponent={() => <View className="mx-4 h-px bg-line" />}
         ListEmptyComponent={
           tasks.isPending ? null : (

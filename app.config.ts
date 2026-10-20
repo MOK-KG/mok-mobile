@@ -54,6 +54,7 @@ const config: ExpoConfig = {
     ],
     'expo-secure-store',
     'expo-notifications',
+    '@react-native-community/datetimepicker',
     'expo-font',
     // Сценовый жизненный цикл UIKit для iOS 27 SDK; удалить, когда шаблон Expo начнёт делать это сам
     './plugins/withSceneLifecycle',
