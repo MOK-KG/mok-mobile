@@ -114,7 +114,7 @@ Reanimated, expo-secure-store, expo-auth-session, expo-notifications, Biome. М�
   `shared/config/{tokens,i18n,links,workCalendar,permissions}.ts`, `shared/lib/{workDays,date,text,toast}.ts`,
   `shared/api/{errors,request,feedback}.ts`,
   `features/tasks/{types,directory,absences,mock,deadline,filters,list,ui,mailQueue}.ts`,
-  `features/notifications/api.ts`, `locales/*.json`.
+  `features/knowledge-base/{types,search,mock}.ts`, `features/notifications/api.ts`, `locales/*.json`.
   Тесты общих файлов живут в web
 - Иконки: `shared/ui/icons.tsx` в web — источник; в mobile тот же набор путей (react-native-svg)
 - Тексты интерфейса только через i18next, ключи во всех трёх файлах `src/locales/` (ru, ky, en)

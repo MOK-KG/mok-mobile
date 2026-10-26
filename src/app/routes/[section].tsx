@@ -5,7 +5,7 @@ import { type Section, sections } from '@/shared/config/permissions';
 const isSection = (value: unknown): value is Section =>
   typeof value === 'string' && value in sections;
 
-/** Разделы из вкладки «Ещё» (календарь, база знаний, файлы, роли) — поверх вкладок */
+/** Разделы из вкладки «Ещё» (календарь, файлы, роли) — поверх вкладок; база знаний — knowledge/ */
 export default function SectionRoute() {
   const { section } = useLocalSearchParams<{ section: string }>();
   if (!isSection(section)) return null;
