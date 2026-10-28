@@ -4,9 +4,18 @@ import { currentUserId, people } from '@/features/tasks/directory';
 import { ApiError } from '@/shared/api/errors';
 import type { RoleCode } from '@/shared/config/permissions';
 import { todayInBishkek } from '@/shared/lib/workDays';
-import { createMockKnowledge } from './mock';
+import { createMockKnowledge, documentPool } from './mock';
 import { matchesQuery, queryStems } from './search';
-import type { KbArticle, KbArticleSummary, KbBlock, KbHiddenMatches, KbSection } from './types';
+import type {
+  KbArticle,
+  KbArticleSummary,
+  KbAttachment,
+  KbBlock,
+  KbHiddenMatches,
+  KbRelatedDocument,
+  KbRelatedTask,
+  KbSection,
+} from './types';
 
 /**
  * Данные базы знаний на мобильном — та же заглушка, что и в web (mock.ts); когда появится API,
@@ -53,14 +62,20 @@ const toSummary = ({
 
 export type KnowledgeList = { sections: KbSection[]; articles: KbArticleSummary[] };
 
+type StoredSection = (typeof store.sections)[number];
+
+/** Раздел заглушки → раздел API; один на список и на создание раздела */
+const toSection = ({ id, name, count, openTo }: StoredSection, roles: RoleCode[]): KbSection => ({
+  id,
+  name,
+  count,
+  accessible: isOpen(id, roles),
+  roles: openTo ? [...openTo] : null,
+});
+
 export function fetchKnowledge(roles: RoleCode[]): KnowledgeList {
   return {
-    sections: store.sections.map(({ id, name, count }) => ({
-      id,
-      name,
-      count,
-      accessible: isOpen(id, roles),
-    })),
+    sections: store.sections.map((s) => toSection(s, roles)),
     articles: store.articles
       .filter((a) => isOpen(a.sectionId, roles))
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
@@ -135,12 +150,70 @@ export function useArticle(id: string, { enabled = true } = {}) {
   });
 }
 
-/** Что пользователь меняет в редакторе. Вложения и связи редактор пока не трогает */
+/** Название раздела: длина и уникальность без учёта регистра и пробелов */
+export const SECTION_NAME_MIN = 3;
+export const SECTION_NAME_MAX = 60;
+const normalizeName = (name: string) => name.trim().replace(/\s+/g, ' ');
+
+/**
+ * Новый раздел (право knowledge.edit проверяет маршрут, в API — бэкенд). Раздел открыт всем
+ * ролям; закрывают раздел на бэкенде. Разделы, как и статьи, не удаляются.
+ */
+export function createSection(name: string, roles: RoleCode[]): KbSection {
+  const clean = normalizeName(name);
+  if (clean.length < SECTION_NAME_MIN || clean.length > SECTION_NAME_MAX) {
+    throw new ApiError(400, 'Invalid name', { code: 'section_name' });
+  }
+  if (store.sections.some((s) => s.name.toLowerCase() === clean.toLowerCase())) {
+    throw new ApiError(409, 'Duplicate section', { code: 'section_exists' });
+  }
+  const next = Math.max(0, ...store.sections.map((s) => Number(s.id.slice(4)) || 0)) + 1;
+  const section: StoredSection = { id: `sec-${next}`, name: clean, openTo: undefined, count: 0 };
+  store.sections.push(section);
+  return toSection(section, roles);
+}
+
+export function useCreateSection() {
+  const roles = useRoles();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (name: string) => {
+      await delay(120);
+      return createSection(name, roles);
+    },
+    // Ошибку (повтор названия) показывает поле в окне
+    meta: {
+      successMessage: (section: KbSection) => ({
+        key: 'knowledge.sectionCreated',
+        params: { name: section.name },
+      }),
+      errorMessage: false,
+    },
+    onSuccess: () => client.invalidateQueries({ queryKey: knowledgeKey }),
+  });
+}
+
+/** Документы, которые можно связать со статьёй (до раздела «Документы» — из заглушки) */
+export function useLinkableDocuments() {
+  return useQuery({
+    queryKey: [...knowledgeKey, 'documents'],
+    queryFn: async () => {
+      await delay(80);
+      return structuredClone(documentPool);
+    },
+  });
+}
+
+/** Что пользователь меняет в редакторе */
 export type ArticleDraft = {
   sectionId: string;
   title: string;
   summary: string;
   body: KbBlock[];
+  /** Файлы в заглушке не хранятся — только имя и расширение */
+  attachments: KbAttachment[];
+  relatedTasks: KbRelatedTask[];
+  relatedDocuments: KbRelatedDocument[];
   /** Что изменено — строка в истории версий */
   change: string;
 };
@@ -163,9 +236,16 @@ export function saveArticle(id: string | null, draft: ArticleDraft, roles: RoleC
     title: draft.title.trim(),
     summary: draft.summary.trim(),
     body: draft.body,
+    attachments: draft.attachments,
+    relatedTasks: draft.relatedTasks,
+    relatedDocuments: draft.relatedDocuments,
+    // Счётчики в списке — те же связи, что в карточке статьи
+    tasksCount: draft.relatedTasks.length,
+    documentsCount: draft.relatedDocuments.length,
     updatedAt: today,
   };
 
+  // Текст версии сохраняется целиком — старую версию можно открыть и сравнить
   const snap = { title: fields.title, summary: fields.summary, body: fields.body };
 
   let article: KbArticle;
@@ -175,12 +255,7 @@ export function saveArticle(id: string | null, draft: ArticleDraft, roles: RoleC
       id: `kb-${next}`,
       ...fields,
       author: editor,
-      tasksCount: 0,
-      documentsCount: 0,
       version: 1,
-      attachments: [],
-      relatedTasks: [],
-      relatedDocuments: [],
       reviewed: null,
       versions: [{ number: 1, date: today, author: editor, change: draft.change.trim(), ...snap }],
     };

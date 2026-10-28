@@ -9,7 +9,13 @@ import type { TaskStatus } from '@/features/tasks/types';
 import { ApiError } from '@/shared/api/errors';
 import { themes } from '@/shared/config/tokens';
 import { formatIsoDate } from '@/shared/lib/date';
-import { AttachLargeIcon, ClockIcon, DocSmallIcon, TasksSmallIcon } from '@/shared/ui/icons';
+import {
+  AttachLargeIcon,
+  ClockIcon,
+  DocSmallIcon,
+  EditMediumIcon,
+  TasksSmallIcon,
+} from '@/shared/ui/icons';
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
 import { useArticle, useKnowledge } from './api';
 import { Avatar, capsTitle, FreshnessBadge, useShortDate } from './parts';
@@ -28,6 +34,8 @@ const statusChip: Record<TaskStatus, string> = {
 /** Статья базы знаний на мобильном: текст, затем содержание, связи и история версий */
 export function ArticleScreen({ articleId }: { articleId: string }) {
   const { t } = useTranslation();
+  const palette = themes[useTheme().theme];
+  const { can } = useCan();
   const article = useArticle(articleId);
   const section = useKnowledge().data?.sections.find((s) => s.id === article.data?.sectionId);
 
@@ -35,7 +43,23 @@ export function ArticleScreen({ articleId }: { articleId: string }) {
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
-      <ScreenHeader title={section?.name ?? t('sections.knowledge')} fallback="/knowledge" />
+      <ScreenHeader
+        title={section?.name ?? t('sections.knowledge')}
+        fallback="/knowledge"
+        right={
+          article.data &&
+          can('knowledge.edit') && (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push(`/knowledge/${articleId}/edit`)}
+              className="h-8 flex-row items-center gap-[6px] rounded-8 border border-line px-[10px] active:bg-row-highlight"
+            >
+              <EditMediumIcon size={14} color={palette.sub} />
+              <Text className="font-medium text-[12.5px] text-sub">{t('knowledge.edit')}</Text>
+            </Pressable>
+          )
+        }
+      />
       {article.isError ? (
         <View className="m-4 items-center rounded-14 border border-line bg-panel p-6">
           <Text className="font-semibold text-[16px] text-text">

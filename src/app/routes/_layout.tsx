@@ -62,7 +62,9 @@ function RootNavigator() {
         <Stack.Screen name="tasks/queue" />
         <Stack.Screen name="tasks/letter/[id]" />
         <Stack.Screen name="knowledge/index" />
+        <Stack.Screen name="knowledge/new" />
         <Stack.Screen name="knowledge/[id]" />
+        <Stack.Screen name="knowledge/[id]/edit" />
         <Stack.Screen name="notifications" />
         <Stack.Screen name="[section]" />
       </Stack.Protected>

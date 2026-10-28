@@ -5,11 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
+import { Can } from '@/features/auth';
 import { themes } from '@/shared/config/tokens';
 import {
   ClearIcon,
   DocMiniIcon,
   LockIcon,
+  PlusIcon,
   SearchIcon,
   ShieldCheckIcon,
   TasksMiniIcon,
@@ -56,7 +58,26 @@ export function KnowledgeScreen() {
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">
-      <ScreenHeader title={t('sections.knowledge')} fallback="/more" />
+      <ScreenHeader
+        title={t('sections.knowledge')}
+        fallback="/more"
+        right={
+          <Can permission="knowledge.edit">
+            <Tooltip content={t('knowledge.newArticle')}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('knowledge.newArticle')}
+                onPress={() =>
+                  router.push(current ? `/knowledge/new?section=${current.id}` : '/knowledge/new')
+                }
+                className="mr-1 size-7 items-center justify-center rounded-8 bg-brand-red active:opacity-80"
+              >
+                <PlusIcon size={16} color="#FFFFFF" />
+              </Pressable>
+            </Tooltip>
+          </Can>
+        }
+      />
 
       <View className="px-4 pt-3">
         <View
