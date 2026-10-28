@@ -36,6 +36,7 @@ const toSummary = ({
   summary,
   author,
   updatedAt,
+  reviewed,
   tasksCount,
   documentsCount,
 }: KbArticle): KbArticleSummary => ({
@@ -45,6 +46,7 @@ const toSummary = ({
   summary,
   author,
   updatedAt,
+  reviewed,
   tasksCount,
   documentsCount,
 });
@@ -164,6 +166,8 @@ export function saveArticle(id: string | null, draft: ArticleDraft, roles: RoleC
     updatedAt: today,
   };
 
+  const snap = { title: fields.title, summary: fields.summary, body: fields.body };
+
   let article: KbArticle;
   if (id === null) {
     const next = Math.max(0, ...store.articles.map((a) => Number(a.id.slice(3)) || 0)) + 1;
@@ -177,7 +181,8 @@ export function saveArticle(id: string | null, draft: ArticleDraft, roles: RoleC
       attachments: [],
       relatedTasks: [],
       relatedDocuments: [],
-      versions: [{ number: 1, date: today, author: editor, change: draft.change.trim() }],
+      reviewed: null,
+      versions: [{ number: 1, date: today, author: editor, change: draft.change.trim(), ...snap }],
     };
     store.articles.push(article);
   } else {
@@ -191,7 +196,7 @@ export function saveArticle(id: string | null, draft: ArticleDraft, roles: RoleC
       ...fields,
       version,
       versions: [
-        { number: version, date: today, author: editor, change: draft.change.trim() },
+        { number: version, date: today, author: editor, change: draft.change.trim(), ...snap },
         ...current.versions,
       ],
     };

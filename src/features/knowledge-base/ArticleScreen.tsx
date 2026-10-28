@@ -13,7 +13,7 @@ import { AttachLargeIcon, ClockIcon, DocSmallIcon, TasksSmallIcon } from '@/shar
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
 import { useArticle, useKnowledge } from './api';
 import { Avatar, capsTitle, FreshnessBadge, useShortDate } from './parts';
-import { freshnessOf } from './search';
+import { checkedAt, freshnessOf } from './search';
 import type { KbArticle, KbBlock } from './types';
 
 const ATTACHMENTS_ID = 'attachments';
@@ -89,7 +89,7 @@ function ArticleBody({ article: a }: { article: KbArticle }) {
         }}
         className="rounded-14 border border-line bg-panel p-4"
       >
-        <FreshnessBadge freshness={freshnessOf(a.updatedAt)} large />
+        <FreshnessBadge freshness={freshnessOf(checkedAt(a))} large />
         <Text
           accessibilityRole="header"
           className="mt-[10px] font-semibold text-[22px] leading-[28px] tracking-[-0.5px] text-text"

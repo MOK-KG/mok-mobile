@@ -18,7 +18,7 @@ import { ScreenHeader } from '@/shared/ui/ScreenHeader';
 import { Tooltip } from '@/shared/ui/Tooltip';
 import { useKnowledge, useKnowledgeSearch } from './api';
 import { Avatar, FreshnessBadge, useShortDate } from './parts';
-import { freshnessOf, queryStems } from './search';
+import { checkedAt, freshnessOf, queryStems } from './search';
 import type { KbArticleSummary, KbHiddenMatches } from './types';
 
 /**
@@ -234,7 +234,7 @@ function ArticleItem({
   const { t } = useTranslation();
   const palette = themes[useTheme().theme];
   const shortDate = useShortDate();
-  const freshness = freshnessOf(a.updatedAt);
+  const freshness = freshnessOf(checkedAt(a));
   return (
     <Pressable
       accessibilityRole="button"
