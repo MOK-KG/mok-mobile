@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { type ColorValue, View } from 'react-native';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { useCan } from '@/features/auth';
+import { useChatUnread } from '@/features/chat/api';
 import { useUnreadCount } from '@/features/notifications/useUnreadCount';
 import type { Section } from '@/shared/config/permissions';
 import { themes } from '@/shared/config/tokens';
@@ -41,12 +42,16 @@ export default function TabsLayout() {
   const palette = themes[useTheme().theme];
   const { canOpen } = useCan();
   const unread = useUnreadCount();
+  const chatUnread = useChatUnread() ?? 0;
 
-  // Счётчиков у чата и документов пока нет: разделы — заглушки, и число не совпало бы
-  // с содержимым. Появятся вместе с разделами
-  const section = (name: Section) => ({
+  // У чата — точка, пока есть непрочитанные; число — в самом списке чатов.
+  // У документов счётчика нет: раздел — заглушка, и число не совпало бы с содержимым
+  const section = (name: Section, dot = 0) => ({
     title: t(`sections.${name}`),
-    tabBarIcon: tabIcon(sectionIcons[name]),
+    tabBarIcon: tabIcon(sectionIcons[name], dot > 0),
+    tabBarAccessibilityLabel: dot
+      ? `${t(`sections.${name}`)}, ${t('shell.unread', { count: dot })}`
+      : undefined,
     href: canOpen(name) ? undefined : null,
   });
 
@@ -63,7 +68,7 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="index" options={section('dashboard')} />
       <Tabs.Screen name="tasks" options={section('tasks')} />
-      <Tabs.Screen name="chat" options={section('chat')} />
+      <Tabs.Screen name="chat" options={section('chat', chatUnread)} />
       <Tabs.Screen name="documents" options={section('documents')} />
       <Tabs.Screen
         name="more"

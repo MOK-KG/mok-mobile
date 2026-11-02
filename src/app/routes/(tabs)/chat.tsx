@@ -1,5 +1,10 @@
-import { SectionScreen } from '@/features/sections/SectionScreen';
+import { RequirePermission } from '@/features/auth';
+import { ChatListScreen } from '@/features/chat/ChatListScreen';
 
 export default function ChatRoute() {
-  return <SectionScreen section="chat" tab />;
+  return (
+    <RequirePermission permission="chat.use">
+      <ChatListScreen />
+    </RequirePermission>
+  );
 }
