@@ -1,5 +1,5 @@
-import { SectionScreen } from '@/features/sections/SectionScreen';
+import { DocumentsScreen } from '@/features/documents/DocumentsScreen';
 
 export default function DocumentsRoute() {
-  return <SectionScreen section="documents" tab />;
+  return <DocumentsScreen />;
 }

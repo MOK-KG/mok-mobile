@@ -26,11 +26,23 @@ let queue: Letter[] = createMockQueue();
 export type JournalEntry = {
   at: string;
   author: string;
-  action: 'mailRejected' | 'mailAccepted';
+  action:
+    | 'mailRejected'
+    | 'mailAccepted'
+    | 'documentRegistered'
+    | 'documentSent'
+    | 'documentResolved'
+    | 'documentDone'
+    | 'documentAnnulled';
   details: string;
 };
 const journal: JournalEntry[] = [];
 export const journalEntries = (): readonly JournalEntry[] => journal;
+
+/** Записать действие в журнал (из других разделов: делопроизводство) */
+export function addJournalEntry(entry: Omit<JournalEntry, 'at'>) {
+  journal.push({ at: new Date().toISOString(), ...entry });
+}
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
