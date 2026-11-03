@@ -11,7 +11,7 @@ import type { Language } from '@/shared/config/i18n';
 import type { Section } from '@/shared/config/permissions';
 import { themes } from '@/shared/config/tokens';
 import { initials } from '@/shared/lib/text';
-import { BellIcon, LogoutIcon } from '@/shared/ui/icons';
+import { BellIcon, LogoutIcon, PlaneIcon } from '@/shared/ui/icons';
 import { LanguageSwitcher } from '@/shared/ui/LanguageSwitcher';
 import { sectionIcons } from '@/shared/ui/sectionIcons';
 import { TabHeader } from '@/shared/ui/TabHeader';
@@ -124,6 +124,11 @@ export function MoreScreen() {
         )}
 
         <Group>
+          <Row
+            Icon={PlaneIcon}
+            label={t('absences.title')}
+            onPress={() => router.push('/absences')}
+          />
           <Row
             Icon={BellIcon}
             label={t('shell.notifications')}

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
+import { useCurrentAbsences } from '@/features/absences/api';
 import { useCan, useSession } from '@/features/auth';
 import { useChatUnread } from '@/features/chat/api';
 import {
@@ -15,7 +16,6 @@ import {
   workMonth,
 } from '@/features/dashboard/summary';
 import { useUnreadCount } from '@/features/notifications/useUnreadCount';
-import { mockAbsences } from '@/features/tasks/absences';
 import { useMailQueueSummary, useTasks } from '@/features/tasks/api';
 import { currentUserId } from '@/features/tasks/directory';
 import { TaskListItem } from '@/features/tasks/list/TaskListItem';
@@ -53,7 +53,8 @@ export function DashboardScreen() {
   const unread = useUnreadCount();
   const tasks = useTasks('department');
   const today = todayInBishkek();
-  const summary = dashboardSummary(tasks.data ?? [], mockAbsences(today), currentUserId, today);
+  const absences = useCurrentAbsences().data ?? [];
+  const summary = dashboardSummary(tasks.data ?? [], absences, currentUserId, today);
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">

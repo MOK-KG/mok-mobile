@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
+import { useCurrentAbsences } from '@/features/absences/api';
 import { useCan } from '@/features/auth';
-import { mockAbsences } from '@/features/tasks/absences';
 import { useTasks } from '@/features/tasks/api';
 import { urgencyOf } from '@/features/tasks/deadline';
 import { currentUserId } from '@/features/tasks/directory';
@@ -55,7 +55,8 @@ export function CalendarScreen() {
 
   const weeks = useMemo(() => monthGrid(month), [month]);
   const norm = useMemo(() => monthNorm(month), [month]);
-  const absences = useMemo(() => mockAbsences(today), [today]);
+  const absenceList = useCurrentAbsences().data;
+  const absences = useMemo(() => absenceList ?? [], [absenceList]);
   const available = calendarLayers.filter((l) => canTasks || l === 'absences');
   const events = useMemo(
     () =>
