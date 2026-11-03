@@ -21,7 +21,7 @@ import { Tooltip } from '@/shared/ui/Tooltip';
 import { useKnowledge, useKnowledgeSearch } from './api';
 import { Avatar, FreshnessBadge, useShortDate } from './parts';
 import { checkedAt, freshnessOf, queryStems } from './search';
-import type { KbArticleSummary, KbHiddenMatches } from './types';
+import type { KbArticleSummary } from './types';
 
 /**
  * База знаний на мобильном (макета нет — по web-макету «Список статей»): поиск, разделы
@@ -226,8 +226,6 @@ export function KnowledgeScreen() {
         }
         ListFooterComponent={
           <View className="gap-3 px-4 py-4">
-            {showFound &&
-              search.data?.hidden.map((h) => <HiddenMatches key={h.sectionId} hidden={h} />)}
             {closed.length > 0 && (
               <Text className="font-regular text-[11px] leading-[15px] text-dim">
                 {t('knowledge.closedNote', {
@@ -302,23 +300,5 @@ function ArticleItem({
         )}
       </View>
     </Pressable>
-  );
-}
-
-function HiddenMatches({ hidden }: { hidden: KbHiddenMatches }) {
-  const { t } = useTranslation();
-  const palette = themes[useTheme().theme];
-  return (
-    <View className="flex-row gap-2 rounded-9 border border-line bg-muted-soft px-3 py-[10px]">
-      <ShieldCheckIcon size={16} color={palette.dim} />
-      <View className="flex-1">
-        <Text className="font-medium text-[12px] tracking-[-0.1px] text-faint">
-          {t('knowledge.hidden', { count: hidden.count, section: hidden.sectionName })}
-        </Text>
-        <Text className="mt-[2px] font-regular text-[11px] leading-[15px] text-dim">
-          {t('knowledge.hiddenNote')}
-        </Text>
-      </View>
-    </View>
   );
 }

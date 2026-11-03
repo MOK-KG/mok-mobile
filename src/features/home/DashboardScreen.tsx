@@ -32,6 +32,7 @@ import {
   ClockIcon,
   MailLargeIcon,
   PlaneIcon,
+  SearchIcon,
   TasksIcon,
 } from '@/shared/ui/icons';
 import { TabHeader } from '@/shared/ui/TabHeader';
@@ -61,18 +62,29 @@ export function DashboardScreen() {
       <TabHeader
         title={t('sections.dashboard')}
         right={
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`${t('shell.notifications')}${unread ? `, ${t('shell.unread', { count: unread })}` : ''}`}
-            onPress={() => router.push('/notifications')}
-            hitSlop={6}
-            className="size-8 items-center justify-center rounded-9 border border-line bg-control"
-          >
-            <BellIcon size={16} color={palette.sub} />
-            {unread > 0 && (
-              <View className="absolute right-[6px] top-[6px] size-[7px] rounded-full border-[1.5px] border-control bg-brand-red" />
-            )}
-          </Pressable>
+          <View className="flex-row gap-2">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('search.label')}
+              onPress={() => router.push('/search')}
+              hitSlop={6}
+              className="size-8 items-center justify-center rounded-9 border border-line bg-control"
+            >
+              <SearchIcon size={16} color={palette.sub} />
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${t('shell.notifications')}${unread ? `, ${t('shell.unread', { count: unread })}` : ''}`}
+              onPress={() => router.push('/notifications')}
+              hitSlop={6}
+              className="size-8 items-center justify-center rounded-9 border border-line bg-control"
+            >
+              <BellIcon size={16} color={palette.sub} />
+              {unread > 0 && (
+                <View className="absolute right-[6px] top-[6px] size-[7px] rounded-full border-[1.5px] border-control bg-brand-red" />
+              )}
+            </Pressable>
+          </View>
         }
       />
       <ScrollView contentContainerClassName="gap-3 px-4 pb-8 pt-1">
