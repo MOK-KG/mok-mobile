@@ -67,7 +67,6 @@ function RootNavigator() {
         <Stack.Screen name="knowledge/[id]/edit" />
         <Stack.Screen name="chat/[id]" />
         <Stack.Screen name="notifications" />
-        <Stack.Screen name="[section]" />
       </Stack.Protected>
     </Stack>
   );

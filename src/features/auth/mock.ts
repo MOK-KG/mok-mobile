@@ -5,7 +5,7 @@ import type { Session, SignInResult } from './types';
  * Заглушка авторизации, пока нет бэкенда.
  *
  * Исход входа: EXPO_PUBLIC_AUTH_MOCK (active | pending | denied).
- * Роль: EXPO_PUBLIC_AUTH_MOCK_ROLE (R1–R9, по умолчанию R1).
+ * Роль: EXPO_PUBLIC_AUTH_MOCK_ROLE (R1–R9, по умолчанию R3 — Генеральный секретарь, как у заглушки пользователя).
  * Смена роли «на лету»: globalThis.__nokMock.setRole('R6') из отладчика.
  * Данные вымышленные (см. CLAUDE.md, раздел «Данные»).
  */
@@ -22,9 +22,11 @@ export function mockOutcome(): MockOutcome | null {
   return OUTCOMES.includes(value as MockOutcome) ? (value as MockOutcome) : null;
 }
 
+export const isMockEnabled = () => mockOutcome() !== null;
+
 function mockRole(): RoleCode {
   const value = process.env.EXPO_PUBLIC_AUTH_MOCK_ROLE;
-  return isRole(value) ? value : 'R1';
+  return isRole(value) ? value : 'R3';
 }
 
 export function mockSessionFor(status: Session['status'], role: RoleCode): Session {

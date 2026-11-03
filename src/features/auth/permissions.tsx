@@ -1,8 +1,9 @@
-import { router } from 'expo-router';
-import type { ReactNode } from 'react';
+import { router, usePathname } from 'expo-router';
+import { type ReactNode, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { addJournalEntry } from '@/features/journal/store';
 import { type Permission, type Section, sections } from '@/shared/config/permissions';
 import { useSession } from './useSession';
 
@@ -51,7 +52,32 @@ export function RequirePermission({
   children: ReactNode;
 }) {
   const { can } = useCan();
-  return can(permission) ? children : <ForbiddenScreen />;
+  const allowed = can(permission);
+  useLogDenied(!allowed, permission);
+  return allowed ? children : <ForbiddenScreen />;
+}
+
+/** «Айбек Дуйшеев» → «А. Дуйшеев» */
+const shortName = (name: string) => {
+  const [first, ...rest] = name.split(' ');
+  return rest.length ? `${first.charAt(0)}. ${rest.join(' ')}` : name;
+};
+
+/**
+ * Отказ по прямой ссылке попадает в журнал действий (приёмка 11.1). В заглушке пишет
+ * интерфейс; с бэкендом — сервер, на сам запрос к данным.
+ */
+function useLogDenied(denied: boolean, permission: Permission | null) {
+  const user = useSession().data?.user;
+  const path = usePathname();
+  useEffect(() => {
+    if (!denied || !user) return;
+    addJournalEntry({
+      author: shortName(user.name),
+      action: 'accessDenied',
+      details: `${path} · ${permission ?? 'role'}`,
+    });
+  }, [denied, user, path, permission]);
 }
 
 export function ForbiddenScreen() {

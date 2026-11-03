@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
+import { useCan } from '@/features/auth';
 import { useChats } from '@/features/chat/api';
 import { useMailQueueSummary } from '@/features/tasks/api';
 import { useOpenTaskByTitle } from '@/features/tasks/useOpenTaskByTitle';
@@ -24,6 +25,7 @@ import { ScreenHeader } from '@/shared/ui/ScreenHeader';
 import { Tooltip } from '@/shared/ui/Tooltip';
 import {
   type AppNotification,
+  canSeeNotification,
   type NotificationKind,
   useMarkAllRead,
   useMarkRead,
@@ -64,7 +66,11 @@ export function NotificationsScreen() {
   // Число писем в очереди — по факту очереди, а не из текста уведомления.
   // Пустая очередь — уведомление скрыто и не считается ни в одном счётчике (как useUnreadCount)
   const queueCount = queue ? queue.ready + queue.manual : 0;
-  const shown = (notifications.data ?? []).filter((n) => n.kind !== 'mailQueue' || queueCount > 0);
+  const { can } = useCan();
+  // Только то, что можно открыть при правах пользователя (как useUnreadCount и веб)
+  const shown = (notifications.data ?? []).filter(
+    (n) => canSeeNotification(n, can) && (n.kind !== 'mailQueue' || queueCount > 0),
+  );
   const data = shown.filter((n) => matches(n, filter));
   const unread = shown.filter((n) => !n.read).length;
 

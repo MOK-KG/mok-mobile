@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { addJournalEntry, resetJournal } from '@/features/journal/store';
 import { ApiError } from '@/shared/api/errors';
 import type { FeedbackMeta } from '@/shared/api/feedback';
 import { addDays, type IsoDate, todayInBishkek } from '@/shared/lib/workDays';
@@ -22,27 +23,8 @@ import {
 let store = createMockTasks();
 let queue: Letter[] = createMockQueue();
 
-/** Журнал действий (заглушка): только добавляется, записи не меняются и не удаляются */
-export type JournalEntry = {
-  at: string;
-  author: string;
-  action:
-    | 'mailRejected'
-    | 'mailAccepted'
-    | 'documentRegistered'
-    | 'documentSent'
-    | 'documentResolved'
-    | 'documentDone'
-    | 'documentAnnulled';
-  details: string;
-};
-const journal: JournalEntry[] = [];
-export const journalEntries = (): readonly JournalEntry[] => journal;
-
-/** Записать действие в журнал (из других разделов: делопроизводство) */
-export function addJournalEntry(entry: Omit<JournalEntry, 'at'>) {
-  journal.push({ at: new Date().toISOString(), ...entry });
-}
+// Журнал действий — общий модуль features/journal/store.ts (цепочка хешей)
+export { addJournalEntry, type JournalEntry, journalEntries } from '@/features/journal/store';
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -50,7 +32,7 @@ const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export function resetTasksMock() {
   store = createMockTasks();
   queue = createMockQueue();
-  journal.length = 0;
+  resetJournal();
 }
 
 function tasksFor(tab: TaskTab): Task[] {
@@ -163,8 +145,7 @@ export async function createFromLetter(letterId: string, suggestion: Suggestion)
     letter,
   });
   queue = queue.filter((l) => l.id !== letterId);
-  journal.unshift({
-    at: now(),
+  addJournalEntry({
     author: me().short,
     action: 'mailAccepted',
     details: `${letter.subject} → ${task.code}`,
@@ -179,8 +160,7 @@ export async function rejectLetter(letterId: string, reason: string) {
   if (!letter) throw new Error('not-found');
   if (reason.trim().length < 5) throw new Error('reason-required');
   queue = queue.filter((l) => l.id !== letterId);
-  journal.unshift({
-    at: now(),
+  addJournalEntry({
     author: me().short,
     action: 'mailRejected',
     details: `${letter.subject}: ${reason.trim()}`,
@@ -378,3 +358,26 @@ export function findSimilar(title: string, limit = 2): Task[] {
 /** Ближайший рабочий день не раньше завтрашнего — срок по умолчанию */
 export const defaultDue = () => addDays(todayInBishkek(), 2);
 export { atBishkek };
+
+// ——— Для раздела «Роли и доступ» ———
+
+/** Незакрытые задачи сотрудника: сколько и сколько из них с эскалацией */
+export function activeTasksOf(personId: string) {
+  const tasks = store.department.filter((t) => t.assignee?.id === personId && t.status !== 'done');
+  return { count: tasks.length, escalated: tasks.filter((t) => t.escalationHours).length };
+}
+
+/**
+ * Увольнение: незакрытые задачи сотрудника переходят к `to`, в истории каждой задачи —
+ * запись о смене исполнителя. Автор задач и прошлые записи не меняются.
+ */
+export function reassignTasksOf(personId: string, to: Person): number {
+  const tasks = store.department.filter((t) => t.assignee?.id === personId && t.status !== 'done');
+  for (const task of tasks) {
+    const from = task.assignee as Person;
+    task.assignee = to;
+    task.deputy = null;
+    log(task, 'assignee', `${from.short}|${to.short}|deactivated`);
+  }
+  return tasks.length;
+}

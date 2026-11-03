@@ -36,6 +36,8 @@ import {
 } from '@/shared/ui/icons';
 import { TabHeader } from '@/shared/ui/TabHeader';
 
+const capitalize = (s: string) => s.charAt(0).toLocaleUpperCase() + s.slice(1);
+
 /** Сколько моих задач видно на рабочем столе; остальные — по ссылке «Все задачи» */
 const MY_TASKS_SHOWN = 5;
 
@@ -97,7 +99,7 @@ function Greeting() {
         {t(`dashboard.greeting.${partOfDay()}`, { name: user?.name.split(' ')[0] })}
       </Text>
       <Text className="font-regular text-[12px] text-faint">
-        {formatIsoDate(today, 'EEEE, d MMMM', i18n.language)}
+        {capitalize(formatIsoDate(today, 'EEEE, d MMMM', i18n.language))}
         {' · '}
         {t(`dashboard.dayKind.${todayKind(today)}`)}
       </Text>

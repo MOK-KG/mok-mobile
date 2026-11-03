@@ -45,18 +45,21 @@ function Button({
   onPress,
   primary = false,
   disabled = false,
+  grow = false,
 }: {
   label: string;
   onPress: () => void;
   primary?: boolean;
   disabled?: boolean;
+  /** Растянуть в ряду кнопок; в столбце — нельзя: flex-1 схлопывает высоту */
+  grow?: boolean;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
       disabled={disabled}
       onPress={onPress}
-      className={`h-11 flex-1 items-center justify-center rounded-9 px-4 ${
+      className={`h-11 items-center justify-center rounded-9 px-4 ${grow ? 'flex-1' : ''} ${
         primary ? 'bg-brand-red' : 'border border-line bg-control'
       } ${disabled ? 'opacity-50' : ''}`}
     >
@@ -297,8 +300,9 @@ function ResolutionForm({ doc, onDone }: { doc: DocumentRecord; onDone: () => vo
         {t('documents.resolutionHint')}
       </Text>
       <View className="flex-row gap-2">
-        <Button label={t('documents.cancel')} onPress={onDone} />
+        <Button grow label={t('documents.cancel')} onPress={onDone} />
         <Button
+          grow
           primary
           label={t('documents.form.submitResolution')}
           disabled={resolve.isPending}
@@ -337,8 +341,9 @@ function AnnulForm({ doc, onDone }: { doc: DocumentRecord; onDone: () => void })
       />
       {tried && error && <Text className="font-regular text-[11.5px] text-danger">{error}</Text>}
       <View className="flex-row gap-2">
-        <Button label={t('documents.cancel')} onPress={onDone} />
+        <Button grow label={t('documents.cancel')} onPress={onDone} />
         <Button
+          grow
           primary
           label={t('documents.action.annul')}
           disabled={annul.isPending}
