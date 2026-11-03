@@ -31,6 +31,7 @@ import {
 import { Tooltip } from '@/shared/ui/Tooltip';
 import {
   chatMembers,
+  threadsOf,
   useChats,
   useMarkChatRead,
   useMessages,
@@ -94,7 +95,12 @@ function Conversation({ chat }: { chat: ChatSummary }) {
   const messages = useMessages(chat.id);
   const markRead = useMarkChatRead();
   const scroll = useRef<ScrollView>(null);
-  const rows = useMemo(() => toRows(messages.data ?? []), [messages.data]);
+  // Ответы в ветках — не в общей ленте, а «N ответов» под сообщением (S-33)
+  const rows = useMemo(
+    () => toRows((messages.data ?? []).filter((m) => !m.threadId)),
+    [messages.data],
+  );
+  const threads = useMemo(() => threadsOf(messages.data ?? []), [messages.data]);
   const lastId = messages.data?.at(-1)?.id;
 
   // Прочитано — при открытии и при каждом новом сообщении, пока переписка на экране
@@ -125,7 +131,13 @@ function Conversation({ chat }: { chat: ChatSummary }) {
             row.kind === 'day' ? (
               <DaySeparator key={row.key} day={row.day} />
             ) : (
-              <MessageRow key={row.key} chat={chat} message={row.message} head={row.head} />
+              <MessageRow
+                key={row.key}
+                chat={chat}
+                message={row.message}
+                head={row.head}
+                replies={threads.get(row.message.id)?.length ?? 0}
+              />
             ),
           )}
         </ScrollView>
@@ -214,10 +226,13 @@ function MessageRow({
   chat,
   message: m,
   head,
+  replies = 0,
 }: {
   chat: ChatSummary;
   message: ChatMessage;
   head: boolean;
+  /** Ответов в ветке; ветки — только в каналах */
+  replies?: number;
 }) {
   const { t, i18n } = useTranslation();
   const palette = usePalette();
@@ -284,6 +299,20 @@ function MessageRow({
               </View>
             )}
           </>
+        )}
+        {chat.kind === 'channel' && m.kind === 'text' && (
+          <Pressable
+            accessibilityRole="link"
+            hitSlop={6}
+            onPress={() => router.push(`/chat/thread/${m.id}?chat=${chat.id}`)}
+            className="mt-1 self-start"
+          >
+            <Text
+              className={`text-[12.5px] ${replies > 0 ? 'font-medium text-info' : 'font-regular text-faint'}`}
+            >
+              {replies > 0 ? t('chat.thread.replies', { count: replies }) : t('chat.thread.reply')}
+            </Text>
+          </Pressable>
         )}
       </View>
     </View>

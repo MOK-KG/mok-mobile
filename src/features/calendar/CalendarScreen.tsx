@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { useCurrentAbsences } from '@/features/absences/api';
 import { useCan } from '@/features/auth';
+import { absenceOf } from '@/features/tasks/absences';
 import { useTasks } from '@/features/tasks/api';
 import { urgencyOf } from '@/features/tasks/deadline';
 import { currentUserId } from '@/features/tasks/directory';
@@ -24,6 +25,7 @@ import {
   dayType,
   eventsByDay,
   holidayRanges,
+  loadLevel,
   monthGrid,
   monthNorm,
   monthOf,
@@ -252,9 +254,9 @@ function DayCell({
       accessibilityLabel={label}
       accessibilityState={{ selected }}
       onPress={onPress}
-      className={`h-[52px] flex-1 items-center gap-[3px] pt-[6px] ${off ? 'bg-surface' : ''} ${
-        selected ? 'border-2 border-info' : ''
-      } ${inMonth ? '' : 'opacity-40'}`}
+      className={`h-[52px] flex-1 items-center gap-[3px] pt-[6px] ${
+        loadLevel(events) === 3 ? 'bg-warning-soft' : off ? 'bg-surface' : ''
+      } ${selected ? 'border-2 border-info' : ''} ${inMonth ? '' : 'opacity-40'}`}
     >
       <View
         className={`size-6 items-center justify-center rounded-full ${today ? 'bg-brand-red' : ''}`}
@@ -323,6 +325,14 @@ function DayDetails({ day, events }: { day: IsoDate; events: DayEvents | undefin
         deadlines.map((task) => (
           <View key={task.id} className="border-t border-line">
             <TaskListItem task={task} onPress={() => router.push(`/tasks/${task.id}`)} />
+            {events?.conflicts.some((c) => c.id === task.id) && (
+              <Text className="px-4 pb-2 font-regular text-[11.5px] text-tone-cyan">
+                {t('calendar.conflict', {
+                  name: task.assignee?.short,
+                  deputy: absenceOf(task.assignee?.id, day)?.deputy.short ?? '—',
+                })}
+              </Text>
+            )}
           </View>
         ))
       )}
