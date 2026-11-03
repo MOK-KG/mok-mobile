@@ -93,6 +93,16 @@ function Body({ doc }: { doc: DocumentRecord }) {
     [t('documents.field.senderRef'), doc.senderRef],
     [t(`documents.field.author.${doc.kind}`), doc.author.short],
     [t('documents.field.signer'), doc.signer?.short ?? null],
+    [t('documents.form.category'), doc.category ? t(`documents.category.${doc.category}`) : null],
+    [t('documents.form.replyDue'), doc.replyDue ? date(doc.replyDue) : null],
+    [
+      t('documents.log.state'),
+      doc.delivery
+        ? `${t(`documents.log.delivery.${doc.delivery.status}`)} · ${doc.delivery.email}${
+            doc.delivery.error ? ` · ${doc.delivery.error}` : ''
+          }`
+        : null,
+    ],
   ];
 
   return (
