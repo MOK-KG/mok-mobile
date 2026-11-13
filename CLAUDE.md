@@ -114,7 +114,7 @@ Reanimated, expo-secure-store, expo-auth-session, expo-notifications, Biome. М�
   `shared/config/{tokens,i18n,links,workCalendar,permissions}.ts`, `shared/lib/{workDays,date,text,toast}.ts`,
   `shared/api/{errors,request,feedback}.ts`,
   `features/tasks/{types,directory,absences,mock,deadline,filters,list,ui,mailQueue}.ts`,
-  `features/knowledge-base/{types,search,mock}.ts`, `features/chat/{types,mock,api}.ts`,
+  `features/knowledge-base/{types,search}.ts`, `features/chat/{types,mock,api}.ts`,
   `features/notifications/api.ts`, `features/dashboard/summary.ts`, `features/calendar/month.ts`,
   `features/documents/{types,mock,api}.ts`, `features/files/{collect,api}.ts`,
   `features/journal/store.ts`, `features/roles/{types,mock,api}.ts`, `features/absences/api.ts`,
@@ -125,6 +125,12 @@ Reanimated, expo-secure-store, expo-auth-session, expo-notifications, Biome. М�
 - Иконки: `shared/ui/icons.tsx` в web — источник; в mobile тот же набор путей (react-native-svg)
 - Тексты интерфейса только через i18next, ключи во всех трёх файлах `src/locales/` (ru, ky, en)
 
+## Тесты
+
+Jest (`jest-expo`) и React Native Testing Library, команда `pnpm test`. Тесты лежат рядом с кодом
+(`*.test.ts`). Здесь тестируется только то, чего нет в web: вход и токен, клиент API, загрузка и
+скачивание файлов. Тесты общих файлов живут в web.
+
 ## Перед коммитом
 
-`pnpm lint` и `pnpm typecheck` должны проходить.
+`pnpm lint`, `pnpm typecheck` и `pnpm test` должны проходить.

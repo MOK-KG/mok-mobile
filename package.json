@@ -49,7 +49,11 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
+    "@testing-library/react-native": "^14.1.0",
+    "@types/jest": "29.5.14",
     "@types/react": "~19.2.2",
+    "jest": "~29.7.0",
+    "jest-expo": "~57.0.6",
     "openapi-typescript": "^7.13.0",
     "typescript": "~6.0.3"
   },
@@ -59,10 +63,26 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
+    "test": "jest",
     "lint": "biome check .",
     "format": "biome check --write .",
     "api:sync": "openapi-typescript ${OPENAPI_URL:-http://localhost:8000/openapi.json} -o src/shared/api/schema.d.ts"
   },
   "private": true,
-  "packageManager": "pnpm@11.25.0"
+  "packageManager": "pnpm@11.25.0",
+  "jest": {
+    "preset": "jest-expo",
+    "transformIgnorePatterns": [
+      "node_modules/(?!(.pnpm|(jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg))"
+    ],
+    "moduleNameMapper": {
+      "^@/assets/(.*)$": "<rootDir>/assets/$1",
+      "^@/(.*)$": "<rootDir>/src/$1"
+    },
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/ios/",
+      "/android/"
+    ]
+  }
 }
