@@ -11,15 +11,13 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://dashboard.olympic.kg/api",
-        "EXPO_PUBLIC_AUTH_MOCK": ""
+        "EXPO_PUBLIC_API_URL": "https://dashboard.olympic.kg/api"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://dashboard.olympic.kg/api",
-        "EXPO_PUBLIC_AUTH_MOCK": ""
+        "EXPO_PUBLIC_API_URL": "https://dashboard.olympic.kg/api"
       }
     }
   },
