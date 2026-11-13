@@ -9,10 +9,18 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://dashboard.olympic.kg/api",
+        "EXPO_PUBLIC_AUTH_MOCK": ""
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://dashboard.olympic.kg/api",
+        "EXPO_PUBLIC_AUTH_MOCK": ""
+      }
     }
   },
   "submit": {
