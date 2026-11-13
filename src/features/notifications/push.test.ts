@@ -24,6 +24,11 @@ jest.mock('expo-notifications', () => ({
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 
+jest.mock('expo-constants', () => ({
+  __esModule: true,
+  default: { expoConfig: { extra: { eas: { projectId: 'project-1' } } } },
+}));
+
 const Notifications = jest.requireMock('expo-notifications');
 
 const fetchMock = jest.fn();
@@ -62,6 +67,7 @@ describe('registerForPush', () => {
     Notifications.getExpoPushTokenAsync.mockResolvedValue({ data: 'ExponentPushToken[x]' });
 
     expect(await registerForPush()).toBe('ExponentPushToken[x]');
+    expect(Notifications.getExpoPushTokenAsync).toHaveBeenCalledWith({ projectId: 'project-1' });
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toMatch(/\/notifications\/devices$/);
     expect(init.method).toBe('POST');

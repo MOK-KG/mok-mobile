@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { type Href, router } from 'expo-router';
 import { useEffect } from 'react';
@@ -35,7 +36,8 @@ export async function registerForPush(): Promise<string | null> {
     permission = await Notifications.requestPermissionsAsync();
   }
   if (!permission.granted) return null;
-  const { data: token } = await Notifications.getExpoPushTokenAsync();
+  const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+  const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
   await api.post('/notifications/devices', { token, platform: Platform.OS });
   storage.set(PUSH_TOKEN_KEY, token);
   return token;
