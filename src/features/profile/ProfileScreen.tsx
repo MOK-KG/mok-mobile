@@ -12,7 +12,6 @@ import {
   useNotificationSettings,
   useSaveNotificationSettings,
 } from '@/features/notifications/api';
-import { currentUserId } from '@/features/tasks/directory';
 import type { RoleCode } from '@/shared/config/permissions';
 import { themes } from '@/shared/config/tokens';
 import { formatIsoDate } from '@/shared/lib/date';
@@ -25,6 +24,7 @@ export function ProfileScreen() {
   const { t, i18n } = useTranslation();
   const palette = themes[useTheme().theme];
   const user = useSession().data?.user;
+  const currentUserId = user?.id;
   const settings = useNotificationSettings().data;
   const save = useSaveNotificationSettings();
   const [draft, setDraft] = useState<NotificationSettings | null>(null);

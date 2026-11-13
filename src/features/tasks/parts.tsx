@@ -9,7 +9,6 @@ import { initials } from '@/shared/lib/text';
 import { type IsoDate, todayInBishkek } from '@/shared/lib/workDays';
 import { CalendarMediumIcon, CheckIcon, DuplicateIcon } from '@/shared/ui/icons';
 import type { DueProblem } from './deadline';
-import { people } from './directory';
 import type { Person, Task, TaskStatus } from './types';
 import { toneClasses } from './ui';
 
@@ -25,9 +24,6 @@ export const statusChip: Record<TaskStatus, string> = {
   review: 'bg-warning-chip text-warning-text',
   done: 'bg-tone-green-bg text-tone-green',
 };
-
-/** Сотрудники, которых можно назначить исполнителем (заглушка, как в web) */
-export const staff: Person[] = [people.ad, people.nb, people.dt, people.ka, people.me];
 
 /** Ключ ошибки срока для перевода newTask.* (праздник — через «|») */
 export const dueMessage = (p: DueProblem) =>

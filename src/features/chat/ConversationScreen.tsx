@@ -14,9 +14,13 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useCurrentAbsences } from '@/features/absences/api';
 import { Avatar, Notice, NoticeText, statusChip, usePalette } from '@/features/tasks/parts';
 import { useOpenTaskByTitle } from '@/features/tasks/useOpenTaskByTitle';
+import { openProtectedFile } from '@/shared/api/download';
+import { toUpload } from '@/shared/api/upload';
 import { formatInBishkek, formatIsoDate } from '@/shared/lib/date';
+import { toast } from '@/shared/lib/toast';
 import {
   AttachLargeIcon,
   BoltMediumIcon,
@@ -30,8 +34,9 @@ import {
 } from '@/shared/ui/icons';
 import { Tooltip } from '@/shared/ui/Tooltip';
 import {
-  chatMembers,
+  chatFileUrl,
   threadsOf,
+  useChatMembers,
   useChats,
   useMarkChatRead,
   useMessages,
@@ -151,11 +156,14 @@ function Header({ chat }: { chat: ChatSummary | null }) {
   const { t, i18n } = useTranslation();
   const palette = usePalette();
   const setMuted = useSetMuted();
+  const members = useChatMembers();
+  const absences = useCurrentAbsences().data;
+  const peer = chat?.peerId ? members[chat.peerId] : undefined;
   const subtitle = !chat
     ? ''
     : chat.kind === 'channel'
       ? t('chat.members', { count: chat.memberIds.length })
-      : peerSubtitle(chat.peerId, t, i18n.language, true);
+      : peerSubtitle(peer, t, i18n.language, true, absences);
 
   const menu = () => {
     if (!chat) return;
@@ -236,6 +244,7 @@ function MessageRow({
 }) {
   const { t, i18n } = useTranslation();
   const palette = usePalette();
+  const chatMembers = useChatMembers();
   if (m.kind === 'system') {
     if (m.system?.kind === 'autoreply') {
       const peer = chat.peerId ? chatMembers[chat.peerId] : undefined;
@@ -288,7 +297,16 @@ function MessageRow({
               <Text className="font-regular text-[14px] leading-[20px] text-sub">{m.text}</Text>
             )}
             {m.file && (
-              <View className="mt-1 h-9 flex-row items-center gap-2 self-start rounded-8 border border-line bg-surface px-3">
+              <Pressable
+                accessibilityRole="link"
+                onPress={() => {
+                  const name = m.file?.ext ? `${m.file.name}.${m.file.ext}` : (m.file?.name ?? '');
+                  openProtectedFile(chatFileUrl(m.id), name).catch(() =>
+                    toast.error(t('errors.network')),
+                  );
+                }}
+                className="mt-1 h-9 flex-row items-center gap-2 self-start rounded-8 border border-line bg-surface px-3 active:bg-control-active"
+              >
                 <AttachLargeIcon size={16} color={palette.faint} />
                 <Text numberOfLines={1} className="shrink font-regular text-[13px] text-sub">
                   {m.file.name}
@@ -296,7 +314,7 @@ function MessageRow({
                 {!!m.file.ext && (
                   <Text className="font-regular text-[11px] text-dim">{m.file.ext}</Text>
                 )}
-              </View>
+              </Pressable>
             )}
           </>
         )}
@@ -370,22 +388,14 @@ function Composer({ chat }: { chat: ChatSummary }) {
   const placeholder = t('chat.placeholderDirect');
   const clean = text.trim();
 
-  // Файл: в заглушке сохраняется только имя, как на web; загрузка — с бэкендом
+  // Файл уходит на сервер отдельным запросом multipart (sendMessage в общем api.ts)
   const attachFile = async () => {
     const picked = await DocumentPicker.getDocumentAsync({ multiple: true });
     if (picked.canceled) return;
     for (const asset of picked.assets) {
-      const dot = asset.name.lastIndexOf('.');
       send.mutate({
         chatId: chat.id,
-        message: {
-          kind: 'text',
-          text: '',
-          file: {
-            name: dot > 0 ? asset.name.slice(0, dot) : asset.name,
-            ext: dot > 0 ? asset.name.slice(dot + 1).toLowerCase() : '',
-          },
-        },
+        message: { kind: 'text', text: '', upload: toUpload(asset) },
       });
     }
   };
@@ -453,6 +463,7 @@ function Composer({ chat }: { chat: ChatSummary }) {
               kind: 'task',
               text: '',
               task: {
+                id: task.id,
                 title: task.title,
                 status: task.status,
                 assignee: task.assignee?.short ?? '—',

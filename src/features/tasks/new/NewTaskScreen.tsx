@@ -20,9 +20,8 @@ import { diffDays } from '@/shared/lib/workDays';
 import { PaperclipIcon, PlaneMediumIcon, PlusMediumIcon } from '@/shared/ui/icons';
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
 import { absenceOf } from '../absences';
-import { defaultDue, findSimilar, useCreateTask } from '../api';
+import { defaultDue, useCreateTask, useDirectory, useSimilarTasks } from '../api';
 import { dueProblem } from '../deadline';
-import { projects } from '../directory';
 import type { Letter } from '../mailQueue';
 import {
   Avatar,
@@ -32,7 +31,6 @@ import {
   dueMessage,
   Notice,
   NoticeText,
-  staff,
   useErrorText,
   usePalette,
 } from '../parts';
@@ -58,8 +56,6 @@ const schema = z
   });
 
 type FormValues = z.infer<typeof schema>;
-
-const projectList = Object.values(projects);
 
 const fieldBox = 'rounded-8 border bg-column px-[13px] font-regular text-[13.5px] text-text';
 
@@ -103,6 +99,9 @@ export function NewTaskScreen({ letter }: { letter?: Letter | null }) {
   const department = useSession().data?.user.department;
   const create = useCreateTask();
   const errorText = useErrorText();
+  const directory = useDirectory().data;
+  const staff = directory?.people ?? [];
+  const projectList = directory?.projects ?? [];
 
   const { control, handleSubmit, watch, formState } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -119,7 +118,8 @@ export function NewTaskScreen({ letter }: { letter?: Letter | null }) {
   const title = watch('title');
   const due = watch('due');
   const assignee = staff.find((p) => p.id === watch('assigneeId'));
-  const similar = title.trim().length >= 6 ? findSimilar(title) : [];
+  const similarQuery = useSimilarTasks(title);
+  const similar = title.trim().length >= 6 ? (similarQuery.data ?? []) : [];
   const absence = absenceOf(assignee?.id);
 
   const onSubmit = handleSubmit(async (v) => {
@@ -130,7 +130,6 @@ export function NewTaskScreen({ letter }: { letter?: Letter | null }) {
       due: v.due,
       project: projectList.find((p) => p.id === v.projectId) ?? null,
       priority: v.priority,
-      attachments: letter?.attachments.length ?? 0,
       letter: letter ?? undefined,
     });
     router.replace(`/tasks/${task.id}`);

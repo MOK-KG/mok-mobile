@@ -4,17 +4,15 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
+import { useCurrentAbsences } from '@/features/absences/api';
+import { useCurrentPersonId } from '@/features/auth';
 import { Avatar } from '@/features/tasks/parts';
 import { themes } from '@/shared/config/tokens';
 import { XIcon } from '@/shared/ui/icons';
 import { Tooltip } from '@/shared/ui/Tooltip';
-import { chatMembers, currentMemberId } from './api';
+import { useChatMembers } from './api';
 import { peerSubtitle } from './parts';
 import type { ChatMember } from './types';
-
-const people: ChatMember[] = Object.values(chatMembers)
-  .filter((m) => m.id !== currentMemberId)
-  .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
 
 /** Шторка «Новая переписка»: выбор сотрудника для личной переписки */
 export function NewChatSheet({
@@ -27,6 +25,12 @@ export function NewChatSheet({
   const { t, i18n } = useTranslation();
   const palette = themes[useTheme().theme];
   const insets = useSafeAreaInsets();
+  const members = useChatMembers();
+  const me = useCurrentPersonId();
+  const absences = useCurrentAbsences().data;
+  const people: ChatMember[] = Object.values(members)
+    .filter((m) => m.id !== me && m.active !== false)
+    .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
 
   return (
     <BottomSheetModal
@@ -83,7 +87,7 @@ export function NewChatSheet({
                 {item.name}
               </Text>
               <Text numberOfLines={1} className="font-regular text-[11.5px] text-dim">
-                {peerSubtitle(item.id, t, i18n.language)}
+                {peerSubtitle(item, t, i18n.language, false, absences)}
               </Text>
             </View>
           </Pressable>

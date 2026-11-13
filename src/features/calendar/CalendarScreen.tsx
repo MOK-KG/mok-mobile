@@ -5,11 +5,10 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { useCurrentAbsences } from '@/features/absences/api';
-import { useCan } from '@/features/auth';
+import { useCan, useCurrentPersonId } from '@/features/auth';
 import { absenceOf } from '@/features/tasks/absences';
 import { useTasks } from '@/features/tasks/api';
 import { urgencyOf } from '@/features/tasks/deadline';
-import { currentUserId } from '@/features/tasks/directory';
 import { TaskListItem } from '@/features/tasks/list/TaskListItem';
 import { Avatar } from '@/features/tasks/parts';
 import { themes } from '@/shared/config/tokens';
@@ -57,6 +56,7 @@ export function CalendarScreen() {
 
   const weeks = useMemo(() => monthGrid(month), [month]);
   const norm = useMemo(() => monthNorm(month), [month]);
+  const me = useCurrentPersonId() ?? '';
   const absenceList = useCurrentAbsences().data;
   const absences = useMemo(() => absenceList ?? [], [absenceList]);
   const available = calendarLayers.filter((l) => canTasks || l === 'absences');
@@ -67,9 +67,9 @@ export function CalendarScreen() {
         canTasks ? (tasks.data ?? []) : [],
         absences,
         new Set([...layers].filter((l) => canTasks || l === 'absences')),
-        currentUserId,
+        me,
       ),
-    [weeks, selected, tasks.data, absences, layers, canTasks],
+    [weeks, selected, tasks.data, absences, layers, canTasks, me],
   );
 
   const pick = (day: IsoDate) => {
@@ -232,6 +232,7 @@ function DayCell({
   onPress: () => void;
 }) {
   const { t, i18n } = useTranslation();
+  const currentUserId = useCurrentPersonId();
   const type = dayType(day);
   const off = type.type !== 'working';
   const deadlines = events?.deadlines ?? [];

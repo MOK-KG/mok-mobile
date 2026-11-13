@@ -22,9 +22,14 @@ import {
   SparkleIcon,
 } from '@/shared/ui/icons';
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
-import { findSimilar, useCreateFromLetter, useMailQueue, useRejectLetter } from '../api';
+import {
+  useCreateFromLetter,
+  useDirectory,
+  useMailQueue,
+  useRejectLetter,
+  useSimilarTasks,
+} from '../api';
 import { dueProblem } from '../deadline';
-import { projects } from '../directory';
 import { canCreate, type Letter, type Suggestion, type SuggestionField } from '../mailQueue';
 import {
   Avatar,
@@ -32,14 +37,12 @@ import {
   DueField,
   DuplicatesNotice,
   dueMessage,
-  staff,
   useErrorText,
   usePalette,
 } from '../parts';
 import { toneClasses } from '../ui';
 import { StateChip } from './QueueScreen';
 
-const projectList = Object.values(projects);
 const fields: SuggestionField[] = ['title', 'assignee', 'due', 'project', 'priority'];
 
 /** Письмо из очереди и предложение модели: задача создаётся только после подтверждения */
@@ -71,10 +74,13 @@ function ParsedLetter({ letter, suggestion }: { letter: Letter; suggestion: Sugg
   const [editing, setEditing] = useState<SuggestionField | null>(null);
   const [rejecting, setRejecting] = useState(false);
   const create = useCreateFromLetter();
+  const directory = useDirectory().data;
+  const staff = directory?.people ?? [];
+  const projectList = directory?.projects ?? [];
 
   const problem = draft.due ? dueProblem(draft.due) : null;
   const ready = canCreate(draft) && !problem;
-  const similar = findSimilar(draft.title);
+  const similar = useSimilarTasks(draft.title).data ?? [];
 
   const confirmField = (field: SuggestionField) => {
     setDraft((d) => {
@@ -324,7 +330,7 @@ function ParsedLetter({ letter, suggestion }: { letter: Letter; suggestion: Sugg
             disabled={!ready || create.isPending}
             onPress={() =>
               create.mutate(
-                { letterId: letter.id, suggestion: draft },
+                { letter, suggestion: draft },
                 { onSuccess: (task) => router.replace(`/tasks/${task.id}`) },
               )
             }
@@ -340,7 +346,7 @@ function ParsedLetter({ letter, suggestion }: { letter: Letter; suggestion: Sugg
         </View>
       </View>
 
-      <RejectDialog open={rejecting} letterId={letter.id} onClose={() => setRejecting(false)} />
+      <RejectDialog open={rejecting} letter={letter} onClose={() => setRejecting(false)} />
     </KeyboardAvoidingView>
   );
 }
@@ -348,11 +354,11 @@ function ParsedLetter({ letter, suggestion }: { letter: Letter; suggestion: Sugg
 /** Отклонение письма: причина обязательна, она и автор попадают в журнал */
 function RejectDialog({
   open,
-  letterId,
+  letter,
   onClose,
 }: {
   open: boolean;
-  letterId: string;
+  letter: Letter;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -367,7 +373,7 @@ function RejectDialog({
       return;
     }
     reject.mutate(
-      { letterId, reason },
+      { letter, reason },
       {
         onSuccess: () => {
           onClose();

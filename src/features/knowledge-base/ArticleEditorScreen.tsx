@@ -242,7 +242,7 @@ function EditorForm({
   const { t } = useTranslation();
   const palette = usePalette();
   const navigation = useNavigation();
-  const save = useSaveArticle(article?.id ?? null);
+  const save = useSaveArticle(article ?? null);
   const [sectionSheet, setSectionSheet] = useState(false);
   // Созданный раздел виден в списке сразу, не дожидаясь перезагрузки разделов
   const [created, setCreated] = useState<KbSection[]>([]);

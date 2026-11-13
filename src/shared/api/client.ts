@@ -1,13 +1,17 @@
 import { createApiClient } from './request';
+import { sessionToken } from './token';
 
 /**
- * HTTP-клиент мобильного приложения: токен сессии передаёт сам вызов
- * (заголовок Authorization, см. features/auth/api.ts).
- * Типы API будут генерироваться из OpenAPI командой `pnpm api:sync`
- * в src/shared/api/schema.d.ts, когда появится бэкенд.
+ * HTTP-клиент мобильного приложения. Cookie здесь нет: сессия — токен из SecureStore,
+ * он уходит заголовком Authorization в каждом запросе. Поэтому общие с web файлы
+ * (features/{tasks,chat,...}/api.ts) работают без правок.
  */
 export const api = createApiClient({
   baseUrl: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000',
+  headers: (): Record<string, string> => {
+    const token = sessionToken.get();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  },
 });
 
 export { ApiError } from './errors';

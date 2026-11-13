@@ -16,7 +16,7 @@ import { themes } from '@/shared/config/tokens';
 import { formatInBishkek } from '@/shared/lib/date';
 import { SendIcon } from '@/shared/ui/icons';
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
-import { chatMembers, threadsOf, useChats, useMessages, useSendMessage } from './api';
+import { threadsOf, useChatMembers, useChats, useMessages, useSendMessage } from './api';
 import type { ChatMessage } from './types';
 
 /** Ветка ответов к сообщению канала (S-33): сообщение, ответы и поле ответа */
@@ -82,6 +82,7 @@ export function ThreadScreen({ chatId, rootId }: { chatId: string; rootId: strin
 
 function Row({ message: m }: { message: ChatMessage }) {
   const { i18n } = useTranslation();
+  const chatMembers = useChatMembers();
   const author = m.authorId ? chatMembers[m.authorId] : undefined;
   return (
     <View className="flex-row gap-[10px]">

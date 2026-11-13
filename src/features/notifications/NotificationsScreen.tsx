@@ -20,6 +20,7 @@ import {
   CheckSmallIcon,
   ClockIcon,
   MailIcon,
+  TasksIcon,
 } from '@/shared/ui/icons';
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
 import { Tooltip } from '@/shared/ui/Tooltip';
@@ -36,6 +37,7 @@ const kinds: Record<
   NotificationKind,
   { Icon: ComponentType<{ size?: number; color: string }>; stripe: string; color: ThemeColorName }
 > = {
+  assigned: { Icon: TasksIcon, stripe: 'bg-info', color: 'info' },
   escalation: { Icon: BoltIcon, stripe: 'bg-warning', color: 'warning' },
   overdue: { Icon: ClockIcon, stripe: 'bg-brand-red', color: 'danger' },
   mailQueue: { Icon: MailIcon, stripe: 'bg-brand-gold', color: 'tone-gold' },

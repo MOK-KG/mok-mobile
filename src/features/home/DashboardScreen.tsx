@@ -5,7 +5,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { useCurrentAbsences } from '@/features/absences/api';
-import { useCan, useSession } from '@/features/auth';
+import { useCan, useCurrentPersonId, useSession } from '@/features/auth';
 import { useChatUnread } from '@/features/chat/api';
 import {
   type DashboardSummary,
@@ -17,7 +17,6 @@ import {
 } from '@/features/dashboard/summary';
 import { useUnreadCount } from '@/features/notifications/useUnreadCount';
 import { useMailQueueSummary, useTasks } from '@/features/tasks/api';
-import { currentUserId } from '@/features/tasks/directory';
 import { TaskListItem } from '@/features/tasks/list/TaskListItem';
 import { Avatar } from '@/features/tasks/parts';
 import { type ThemeColorName, themes } from '@/shared/config/tokens';
@@ -55,7 +54,8 @@ export function DashboardScreen() {
   const tasks = useTasks('department');
   const today = todayInBishkek();
   const absences = useCurrentAbsences().data ?? [];
-  const summary = dashboardSummary(tasks.data ?? [], absences, currentUserId, today);
+  const me = useCurrentPersonId() ?? '';
+  const summary = dashboardSummary(tasks.data ?? [], absences, me, today);
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-canvas">

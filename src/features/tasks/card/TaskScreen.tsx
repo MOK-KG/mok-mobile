@@ -12,9 +12,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCan } from '@/features/auth';
+import { openProtectedFile } from '@/shared/api/download';
 import { formatInBishkek, formatIsoDate } from '@/shared/lib/date';
+import { toast } from '@/shared/lib/toast';
 import { addDays, todayInBishkek } from '@/shared/lib/workDays';
 import {
+  AttachLargeIcon,
   BellSmallIcon,
   BoltMediumIcon,
   BookIcon,
@@ -32,7 +35,7 @@ import {
 } from '@/shared/ui/icons';
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
 import { absenceOf, isAbsentOn } from '../absences';
-import { useAddComment, useAddSubtask, useTask, useToggleSubtask } from '../api';
+import { attachmentUrl, useAddComment, useAddSubtask, useTask, useToggleSubtask } from '../api';
 import { urgencyOf } from '../deadline';
 import { Avatar, Notice, NoticeText, sectionTitle, statusChip, usePalette } from '../parts';
 import type { HistoryEntry, HistoryKind, TaskDetail } from '../types';
@@ -165,6 +168,7 @@ function TaskBody({ task }: { task: TaskDetail }) {
         </View>
 
         <Properties task={task} />
+        <Attachments task={task} />
         <Subtasks task={task} />
         <Discussion task={task} />
         <History task={task} />
@@ -286,6 +290,37 @@ function Properties({ task }: { task: TaskDetail }) {
   );
 }
 
+/** Вложения задачи: файл скачивается с токеном сессии и открывается системным окном */
+function Attachments({ task }: { task: TaskDetail }) {
+  const { t } = useTranslation();
+  const palette = usePalette();
+  if (task.attachmentItems.length === 0) return null;
+  return (
+    <View>
+      <Text className={sectionTitle}>{t('taskCard.attachments')}</Text>
+      <View className="mt-2 gap-2">
+        {task.attachmentItems.map((a) => (
+          <Pressable
+            key={a.id}
+            accessibilityRole="link"
+            onPress={() =>
+              openProtectedFile(attachmentUrl(a.id), a.filename).catch(() =>
+                toast.error(t('errors.network')),
+              )
+            }
+            className="h-10 flex-row items-center gap-2 rounded-8 border border-line bg-surface px-3 active:bg-control-active"
+          >
+            <AttachLargeIcon size={16} color={palette.faint} />
+            <Text numberOfLines={1} className="flex-1 font-regular text-[13px] text-sub">
+              {a.filename}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 function Subtasks({ task }: { task: TaskDetail }) {
   const { t } = useTranslation();
   const palette = usePalette();
@@ -321,7 +356,7 @@ function Subtasks({ task }: { task: TaskDetail }) {
             accessibilityRole="checkbox"
             accessibilityState={{ checked: s.done, disabled: !editable }}
             disabled={!editable}
-            onPress={() => toggle.mutate({ taskId: task.id, subtaskId: s.id })}
+            onPress={() => toggle.mutate({ taskId: task.id, subtaskId: s.id, done: !s.done })}
             className="min-h-[38px] flex-row items-center gap-[10px] py-1"
           >
             <View

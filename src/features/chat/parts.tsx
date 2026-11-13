@@ -1,11 +1,11 @@
 import type { TFunction } from 'i18next';
 import { Text, View } from 'react-native';
-import { absenceOf, isAbsentOn } from '@/features/tasks/absences';
+import { type Absence, absenceOf, isAbsentOn } from '@/features/tasks/absences';
 import { Avatar } from '@/features/tasks/parts';
 import { formatInBishkek, formatIsoDate } from '@/shared/lib/date';
 import { addDays, type IsoDate, todayInBishkek } from '@/shared/lib/workDays';
-import { chatMembers, currentMemberId } from './api';
-import type { Chat, ChatMessage } from './types';
+import { useChatMembers } from './api';
+import type { Chat, ChatMember, ChatMessage } from './types';
 
 /** Общие куски чата на мобильном: список переписок и сама переписка */
 
@@ -29,11 +29,16 @@ export function dayLabel(day: IsoDate, t: TFunction, lang: string, today = today
 }
 
 /** Подпись собеседника: «R5 · Медицинский» или «R4 · в отпуске» */
-export function peerSubtitle(peerId: string | null, t: TFunction, lang: string, long = false) {
-  const peer = peerId ? chatMembers[peerId] : undefined;
+export function peerSubtitle(
+  peer: ChatMember | undefined,
+  t: TFunction,
+  lang: string,
+  long = false,
+  absences?: Absence[],
+) {
   if (!peer) return '';
   const today = todayInBishkek();
-  const absence = absenceOf(peer.id, today);
+  const absence = absenceOf(peer.id, today, absences);
   if (absence && isAbsentOn(absence, today)) {
     const vacation = long
       ? t('chat.vacationUntil', { date: formatIsoDate(absence.to, 'd MMM', lang).replace('.', '') })
@@ -46,7 +51,13 @@ export function peerSubtitle(peerId: string | null, t: TFunction, lang: string, 
 }
 
 /** Текст сообщения для строки списка: «Кубат: …», «Вы: …», «Автоответ: …» */
-export function previewOf(chat: Chat, message: ChatMessage | null, t: TFunction) {
+export function previewOf(
+  chat: Chat,
+  message: ChatMessage | null,
+  t: TFunction,
+  members: Record<string, ChatMember>,
+  me: string | undefined,
+) {
   if (!message) return t('chat.noMessages');
   if (message.kind === 'system') {
     return message.system?.kind === 'autoreply'
@@ -57,9 +68,9 @@ export function previewOf(chat: Chat, message: ChatMessage | null, t: TFunction)
     message.kind === 'task'
       ? `${t('chat.taskFromBoard')}: ${message.task?.title ?? ''}`
       : message.text || message.file?.name || '';
-  if (message.authorId === currentMemberId) return `${t('chat.you')}: ${body}`;
+  if (message.authorId === me) return `${t('chat.you')}: ${body}`;
   if (chat.kind === 'channel' && message.authorId) {
-    const first = chatMembers[message.authorId]?.name.split(' ')[0];
+    const first = members[message.authorId]?.name.split(' ')[0];
     if (first) return `${first}: ${body}`;
   }
   return body;
@@ -67,7 +78,8 @@ export function previewOf(chat: Chat, message: ChatMessage | null, t: TFunction)
 
 /** Значок переписки: «#» у канала, инициалы собеседника у личной */
 export function ChatBadge({ chat, size = 40 }: { chat: Chat; size?: number }) {
-  const peer = chat.peerId ? chatMembers[chat.peerId] : undefined;
+  const members = useChatMembers();
+  const peer = chat.peerId ? members[chat.peerId] : undefined;
   if (chat.kind === 'direct' && peer) return <Avatar person={peer} size={size} />;
   return (
     <View

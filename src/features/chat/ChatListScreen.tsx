@@ -6,10 +6,12 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
+import { useCurrentAbsences } from '@/features/absences/api';
+import { useCurrentPersonId } from '@/features/auth';
 import { themes } from '@/shared/config/tokens';
 import { PlusIcon, SearchIcon, XIcon } from '@/shared/ui/icons';
 import { Tooltip } from '@/shared/ui/Tooltip';
-import { useChats, useStartDirect } from './api';
+import { useChatMembers, useChats, useStartDirect } from './api';
 import { NewChatSheet } from './NewChatSheet';
 import { ChatBadge, listTime, peerSubtitle, previewOf } from './parts';
 import type { ChatSummary } from './types';
@@ -111,11 +113,15 @@ export function ChatListScreen() {
 
 function ChatRow({ chat, onPress }: { chat: ChatSummary; onPress: () => void }) {
   const { t, i18n } = useTranslation();
+  const members = useChatMembers();
+  const me = useCurrentPersonId();
+  const absences = useCurrentAbsences().data;
+  const peer = chat.peerId ? members[chat.peerId] : undefined;
   const subtitle =
     chat.kind === 'channel'
       ? t('chat.members', { count: chat.memberIds.length })
-      : peerSubtitle(chat.peerId, t, i18n.language);
-  const preview = previewOf(chat, chat.last, t);
+      : peerSubtitle(peer, t, i18n.language, false, absences);
+  const preview = previewOf(chat, chat.last, t, members, me);
   const time = chat.last ? listTime(chat.last.at, t, i18n.language) : '';
   const unread = chat.unread > 0 ? `, ${t('chat.unread', { count: chat.unread })}` : '';
 

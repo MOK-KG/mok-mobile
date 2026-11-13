@@ -3,9 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
-import { useCan } from '@/features/auth';
+import { useCan, useMe } from '@/features/auth';
 import { type Absence, type AbsenceKind, absenceKinds } from '@/features/tasks/absences';
-import { currentUserId, people } from '@/features/tasks/directory';
 import { Avatar, Choices, DueField } from '@/features/tasks/parts';
 import type { Person } from '@/features/tasks/types';
 import { themes } from '@/shared/config/tokens';
@@ -16,13 +15,19 @@ import {
   type AbsenceProblem,
   absenceProblems,
   absenceWorkingDays,
+  useAbsencePeople,
   useAbsences,
   useCancelAbsence,
   useCreateAbsence,
 } from './api';
 
-const staff: Person[] = [people.ad, people.nb, people.dt, people.ka, people.me, people.ju];
-const me = staff.find((p) => p.id === currentUserId) ?? people.ad;
+/** Текущий сотрудник как Person: из справочника, пока он грузится — из сессии */
+function useMePerson(staff: Person[]): Person {
+  const user = useMe();
+  const id = user?.id ?? '';
+  const name = user?.name ?? '';
+  return staff.find((p) => p.id === id) ?? { id, name, short: name, tone: 'blue' };
+}
 const caps = 'font-semibold text-[10px] uppercase tracking-[1.4px] text-dim';
 
 type Group = 'now' | 'upcoming' | 'past' | 'cancelled';
@@ -42,6 +47,8 @@ export function AbsencesScreen() {
   const canManage = can('staff.manage') || can('tasks.assign');
   const today = todayInBishkek();
   const list = useAbsences().data ?? [];
+  const staff = useAbsencePeople().data ?? [];
+  const me = useMePerson(staff);
   const [creating, setCreating] = useState(false);
   const [cancelling, setCancelling] = useState<string | null>(null);
   const date = (d: IsoDate) => formatIsoDate(d, 'd MMM', i18n.language).replace('.', '');
@@ -54,7 +61,12 @@ export function AbsencesScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {creating ? (
-          <AbsenceForm canManage={canManage} onDone={() => setCreating(false)} />
+          <AbsenceForm
+            canManage={canManage}
+            staff={staff}
+            me={me}
+            onDone={() => setCreating(false)}
+          />
         ) : (
           <Btn primary label={t('absences.new')} onPress={() => setCreating(true)} />
         )}
@@ -183,10 +195,20 @@ function useProblemText() {
       : t(`absences.problem.${p.code}`);
 }
 
-function AbsenceForm({ canManage, onDone }: { canManage: boolean; onDone: () => void }) {
+function AbsenceForm({
+  canManage,
+  staff,
+  me,
+  onDone,
+}: {
+  canManage: boolean;
+  staff: Person[];
+  me: Person;
+  onDone: () => void;
+}) {
   const { t } = useTranslation();
   const palette = themes[useTheme().theme];
-  const create = useCreateAbsence(me.short);
+  const create = useCreateAbsence();
   const problemText = useProblemText();
   const today = todayInBishkek();
   const [kind, setKind] = useState<AbsenceKind>('vacation');
@@ -282,7 +304,7 @@ function AbsenceForm({ canManage, onDone }: { canManage: boolean; onDone: () => 
 function CancelForm({ absence, onDone }: { absence: Absence; onDone: () => void }) {
   const { t } = useTranslation();
   const palette = themes[useTheme().theme];
-  const cancel = useCancelAbsence(me.short);
+  const cancel = useCancelAbsence();
   const [reason, setReason] = useState('');
   const [tried, setTried] = useState(false);
   const error = reason.trim().length < 5 ? t('absences.errorReason') : null;

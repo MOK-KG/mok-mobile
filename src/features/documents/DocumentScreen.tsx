@@ -5,14 +5,23 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { useCan } from '@/features/auth';
-import { useTasks } from '@/features/tasks/api';
+import { useDirectory, useTasks } from '@/features/tasks/api';
 import { dueProblem } from '@/features/tasks/deadline';
-import { Avatar, Choices, DueField, dueMessage, staff, useErrorText } from '@/features/tasks/parts';
+import { Avatar, Choices, DueField, dueMessage, useErrorText } from '@/features/tasks/parts';
+import { openProtectedFile } from '@/shared/api/download';
 import { themes } from '@/shared/config/tokens';
 import { formatInBishkek, formatIsoDate } from '@/shared/lib/date';
 import { addWorkingDays, type IsoDate, todayInBishkek } from '@/shared/lib/workDays';
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
-import { docNumber, useAnnul, useDocument, useIssue, useMarkDone, useResolve } from './api';
+import {
+  attachmentUrl,
+  docNumber,
+  useAnnul,
+  useDocument,
+  useIssue,
+  useMarkDone,
+  useResolve,
+} from './api';
 import { StatusChip } from './parts';
 import type { DocumentRecord } from './types';
 
@@ -130,13 +139,17 @@ function Body({ doc }: { doc: DocumentRecord }) {
             {doc.summary}
           </Text>
         )}
-        {doc.attachments.map((name) => (
-          <Text
-            key={name}
-            className="mt-2 rounded-8 border border-line bg-surface px-3 py-2 font-regular text-[12.5px] text-sub"
+        {doc.attachments.map((a) => (
+          <Pressable
+            key={a.id}
+            accessibilityRole="link"
+            onPress={() => openProtectedFile(attachmentUrl(a.id), a.name)}
+            className="mt-2 rounded-8 border border-line bg-surface px-3 py-2 active:bg-control-active"
           >
-            {name}
-          </Text>
+            <Text numberOfLines={1} className="font-regular text-[12.5px] text-sub">
+              {a.name}
+            </Text>
+          </Pressable>
         ))}
       </Card>
 
@@ -254,6 +267,7 @@ function ResolutionCard({ doc }: { doc: DocumentRecord }) {
 
 function ResolutionForm({ doc, onDone }: { doc: DocumentRecord; onDone: () => void }) {
   const { t } = useTranslation();
+  const staff = useDirectory().data?.people ?? [];
   const palette = themes[useTheme().theme];
   const errorText = useErrorText();
   const resolve = useResolve();

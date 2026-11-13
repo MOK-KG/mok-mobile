@@ -1,31 +1,34 @@
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { ApiError, api } from '@/shared/api/client';
-import { storage } from '@/shared/lib/storage';
+import { sessionToken } from '@/shared/api/token';
 import { mockApi, mockOutcome } from './mock';
 import type { Session, SignInError, SignInResult } from './types';
 
-const TOKEN_KEY = 'nok.sessionToken';
-
-const authHeaders = (): Record<string, string> => {
-  const token = storage.get(TOKEN_KEY);
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
-
 /**
- * Вход через Google ведёт бэкенд (OAuth). Приложение открывает /auth/google/start в системном
- * браузере, бэкенд проверяет домен и возвращает в приложение по nokkr://auth?token=...
- * или nokkr://auth?error=forbidden_domain&email=... Контракт уточнится с OpenAPI.
+ * Вход через Google ведёт бэкенд (OAuth):
+ * 1. Приложение открывает /auth/google/start?returnTo=nokkr://auth в системном браузере.
+ * 2. Бэкенд проверяет домен и возвращает в приложение nokkr://auth?code=... — одноразовый
+ *    код на 60 секунд, а не сам токен: схему nokkr:// может перехватить другое приложение.
+ *    Ошибка — nokkr://auth?error=forbidden_domain&email=... или ?error=<код>.
+ * 3. Приложение обменивает код на токен сессии: POST /auth/mobile/token { code } → { token }.
+ * Токен — сессия Django, дальше он уходит заголовком Authorization (shared/api/client.ts).
  */
 export const authApi = {
   async getSession(): Promise<Session | null> {
     if (mockOutcome()) return mockApi.getSession();
-    if (!storage.get(TOKEN_KEY)) return null;
+    if (!sessionToken.get()) return null;
     try {
-      return await api.get<Session>('/auth/me', { headers: authHeaders() });
+      const session = await api.get<
+        Omit<Session, 'user'> & {
+          user: Omit<Session['user'], 'id'> & { id: number | string };
+        }
+      >('/auth/me');
+      // ID на бэкенде — число; в приложении люди сравниваются по строке (Person.id)
+      return { ...session, user: { ...session.user, id: String(session.user.id) } };
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
-        storage.remove(TOKEN_KEY);
+        sessionToken.clear();
         return null;
       }
       throw error;
@@ -44,20 +47,24 @@ export const authApi = {
     if (result.type !== 'success') return { ok: false, cancelled: true };
 
     const { queryParams } = Linking.parse(result.url);
-    const token = queryParams?.token;
-    if (typeof token === 'string') {
-      storage.set(TOKEN_KEY, token);
+    const code = queryParams?.code;
+    if (typeof code !== 'string') return { ok: false, error: readSignInError(queryParams ?? {}) };
+    try {
+      const { token } = await api.post<{ token: string }>('/auth/mobile/token', { code });
+      sessionToken.set(token);
       return { ok: true };
+    } catch {
+      // Код просрочен или уже использован — войти заново
+      return { ok: false, error: { code: 'unknown' } };
     }
-    return { ok: false, error: readSignInError(queryParams ?? {}) };
   },
 
   async signOut(): Promise<void> {
     if (mockOutcome()) return mockApi.signOut();
     try {
-      await api.post<void>('/auth/logout', undefined, { headers: authHeaders() });
+      await api.post<void>('/auth/logout');
     } finally {
-      storage.remove(TOKEN_KEY);
+      sessionToken.clear();
     }
   },
 };
