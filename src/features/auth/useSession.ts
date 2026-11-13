@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { unregisterPush } from '@/features/notifications/push';
 import { authApi } from './api';
 
 export const sessionQueryKey = ['auth', 'session'] as const;
@@ -37,7 +38,10 @@ export function useSignIn() {
 export function useSignOut() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: authApi.signOut,
+    mutationFn: async () => {
+      await unregisterPush().catch(() => {});
+      await authApi.signOut();
+    },
     onSuccess: () => {
       queryClient.setQueryData(sessionQueryKey, null);
       // Данные прежнего пользователя не должны достаться следующему на этом устройстве.

@@ -12,6 +12,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { AppProviders } from '@/app/providers';
 import { useSession } from '@/features/auth';
+import { usePushNotifications } from '@/features/notifications/push';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -39,6 +40,7 @@ export default function RootLayout() {
 function RootNavigator() {
   const session = useSession();
   const status = session.data?.status ?? 'guest';
+  usePushNotifications(status === 'active');
 
   useEffect(() => {
     if (!session.isPending) SplashScreen.hideAsync();

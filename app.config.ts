@@ -15,6 +15,7 @@ const APP_ID = 'kg.olympic.nok.dev';
 const config: ExpoConfig = {
   name: 'НОК КР',
   slug: 'nok-kr',
+  owner: 'aziret.sherov',
   version: '1.0.0',
   orientation: 'portrait',
   // TODO(release): иконки и сплэш — заглушки из шаблона Expo, заменить на брендовые НОК КР.
@@ -22,6 +23,9 @@ const config: ExpoConfig = {
   // TODO(release): схема deep link. Согласовать с OAuth-провайдером (expo-auth-session):
   // redirect URI вида nokkr://...
   scheme: 'nokkr',
+  extra: {
+    eas: { projectId: '63a507b1-0124-4129-8a60-1f98af84cd0c' },
+  },
   userInterfaceStyle: 'automatic',
   ios: {
     bundleIdentifier: APP_ID,
