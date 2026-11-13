@@ -43,6 +43,7 @@ import {
   useSendMessage,
   useSetMuted,
 } from './api';
+import { MentionSuggestions, useMentions } from './MentionSuggestions';
 import { ChatBadge, dayLabel, dayOf, peerSubtitle } from './parts';
 import { TaskPickerSheet } from './TaskPickerSheet';
 import type { ChatMessage, ChatSummary } from './types';
@@ -383,6 +384,7 @@ function Composer({ chat }: { chat: ChatSummary }) {
   const palette = usePalette();
   const send = useSendMessage();
   const [text, setText] = useState('');
+  const mentions = useMentions(chat.memberIds, text, setText);
   const sheet = useRef<BottomSheetModal>(null);
   // В мобильном макете и в канале — «Сообщение…»
   const placeholder = t('chat.placeholderDirect');
@@ -409,11 +411,14 @@ function Composer({ chat }: { chat: ChatSummary }) {
 
   return (
     <View className="border-t border-line bg-panel px-4 py-[10px]">
+      <MentionSuggestions candidates={mentions.candidates} onPick={mentions.pick} />
       <View className="min-h-11 flex-row items-end gap-1 rounded-11 border border-line bg-surface pl-[13px] pr-[6px]">
         <TextInput
           multiline
           value={text}
-          onChangeText={setText}
+          onChangeText={mentions.onChangeText}
+          onSelectionChange={mentions.onSelectionChange}
+          selection={mentions.selection}
           placeholder={placeholder}
           placeholderTextColor={palette.dim}
           accessibilityLabel={placeholder}

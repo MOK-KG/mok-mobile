@@ -17,6 +17,7 @@ import { formatInBishkek } from '@/shared/lib/date';
 import { SendIcon } from '@/shared/ui/icons';
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
 import { threadsOf, useChatMembers, useChats, useMessages, useSendMessage } from './api';
+import { MentionSuggestions, useMentions } from './MentionSuggestions';
 import type { ChatMessage } from './types';
 
 /** Ветка ответов к сообщению канала (S-33): сообщение, ответы и поле ответа */
@@ -29,6 +30,7 @@ export function ThreadScreen({ chatId, rootId }: { chatId: string; rootId: strin
   const replies = threadsOf(all).get(rootId) ?? [];
   const send = useSendMessage();
   const [text, setText] = useState('');
+  const mentions = useMentions(chat?.memberIds ?? [], text, setText);
   const submit = () => {
     const clean = text.trim();
     if (!clean) return;
@@ -53,11 +55,16 @@ export function ThreadScreen({ chatId, rootId }: { chatId: string; rootId: strin
             <Row key={r.id} message={r} />
           ))}
         </ScrollView>
-        <View className="flex-row items-end gap-2 border-t border-line bg-panel px-3 py-2">
+        <View className="border-t border-line bg-panel px-3 pt-2">
+          <MentionSuggestions candidates={mentions.candidates} onPick={mentions.pick} />
+        </View>
+        <View className="flex-row items-end gap-2 bg-panel px-3 pb-2">
           <TextInput
             multiline
             value={text}
-            onChangeText={setText}
+            onChangeText={mentions.onChangeText}
+            onSelectionChange={mentions.onSelectionChange}
+            selection={mentions.selection}
             placeholder={t('chat.thread.placeholder')}
             placeholderTextColor={palette.dim}
             accessibilityLabel={t('chat.thread.placeholder')}
