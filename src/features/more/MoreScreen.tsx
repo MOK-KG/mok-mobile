@@ -18,7 +18,12 @@ import { TabHeader } from '@/shared/ui/TabHeader';
 import { ThemeSwitch } from '@/shared/ui/ThemeSwitch';
 
 /** Разделы, которым не хватило места в нижней панели — порядок как в меню web */
-const moreSections: Section[] = ['calendar', 'knowledge', 'files', 'access'];
+const moreSections = [
+  'calendar',
+  'knowledge',
+  'files',
+  'access',
+] as const satisfies readonly Section[];
 
 type IconType = ComponentType<{ size?: number; color: string }>;
 

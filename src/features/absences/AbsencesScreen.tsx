@@ -21,7 +21,6 @@ import {
   useCreateAbsence,
 } from './api';
 
-/** Текущий сотрудник как Person: из справочника, пока он грузится — из сессии */
 function useMePerson(staff: Person[]): Person {
   const user = useMe();
   const id = user?.id ?? '';

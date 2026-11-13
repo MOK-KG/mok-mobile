@@ -33,7 +33,6 @@ export function mockSessionFor(status: Session['status'], role: RoleCode): Sessi
   return {
     status,
     user: {
-      // Как у Айбека Дуйшеева в общих данных (features/tasks/directory.ts)
       id: 'u-ad',
       email: 'a.duysheyev@olympic.kg',
       name: 'Айбек Дуйшеев',

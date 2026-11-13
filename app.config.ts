@@ -10,7 +10,7 @@ import type { ExpoConfig } from 'expo/config';
 // TODO(release): тестовый идентификатор. Заменить на идентификатор организации
 // (например, kg.olympic.nokkr) до регистрации приложения в App Store Connect и Google Play.
 // После регистрации идентификатор сменить нельзя: это будет другое приложение.
-const APP_ID = 'com.nokkr.dev';
+const APP_ID = 'kg.olympic.nok.dev';
 
 const config: ExpoConfig = {
   name: 'НОК КР',

@@ -388,7 +388,6 @@ function Composer({ chat }: { chat: ChatSummary }) {
   const placeholder = t('chat.placeholderDirect');
   const clean = text.trim();
 
-  // Файл уходит на сервер отдельным запросом multipart (sendMessage в общем api.ts)
   const attachFile = async () => {
     const picked = await DocumentPicker.getDocumentAsync({ multiple: true });
     if (picked.canceled) return;

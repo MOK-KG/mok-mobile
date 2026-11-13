@@ -290,7 +290,6 @@ function Properties({ task }: { task: TaskDetail }) {
   );
 }
 
-/** Вложения задачи: файл скачивается с токеном сессии и открывается системным окном */
 function Attachments({ task }: { task: TaskDetail }) {
   const { t } = useTranslation();
   const palette = usePalette();

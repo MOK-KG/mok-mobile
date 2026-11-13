@@ -1,9 +1,5 @@
 import { storage } from '@/shared/lib/storage';
 
-/**
- * Токен сессии мобильного приложения. Бэкенд выдаёт его после входа через Google
- * (редирект на nokkr://auth?token=...), клиент передаёт его в каждом запросе.
- */
 const TOKEN_KEY = 'nok.sessionToken';
 
 export const sessionToken = {
