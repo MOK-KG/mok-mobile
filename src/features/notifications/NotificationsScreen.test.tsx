@@ -1,4 +1,5 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { router } from 'expo-router';
 import { fakeApi } from '@/test/fakeApi';
 import { renderScreen } from '@/test/render';
 import { NotificationsScreen } from './NotificationsScreen';
@@ -69,4 +70,55 @@ it('marks everything as read on the server', async () => {
       true,
     ),
   );
+});
+
+it('opens the staff card from a pending user notification', async () => {
+  fakeApi(
+    {
+      ...routes,
+      'GET /notifications': [
+        {
+          id: 9,
+          kind: 'pendingUser',
+          title: 'Дамира Токтосунова ждёт роль',
+          text: 'dt@olympic.kg · вошёл(а) через Google, роль не назначена.',
+          params: { name: 'Дамира Токтосунова', email: 'dt@olympic.kg', staffId: '41' },
+          at: minutesAgo(2),
+          read: false,
+          target: { kind: 'staff', staffId: '41' },
+        },
+      ],
+      'POST /notifications/9/read': null,
+    },
+    ['roles.assign'],
+  );
+  await renderScreen(<NotificationsScreen />);
+  expect(await screen.findByText('Дамира Токтосунова ждёт роль')).toBeTruthy();
+  await fireEvent.press(screen.getByText('Назначить роль'));
+  expect(router.push).toHaveBeenCalledWith('/access/41');
+});
+
+it('hides pending user notifications without the right to assign roles', async () => {
+  fakeApi(
+    {
+      ...routes,
+      'GET /notifications': [
+        {
+          id: 9,
+          kind: 'pendingUser',
+          title: 'Дамира Токтосунова ждёт роль',
+          text: '',
+          params: null,
+          at: minutesAgo(2),
+          read: false,
+          target: { kind: 'staff', staffId: '41' },
+        },
+        notifications[0],
+      ],
+    },
+    ['tasks.view'],
+  );
+  await renderScreen(<NotificationsScreen />);
+  expect(await screen.findByText('Новая задача · «Ответить на запрос МОК»')).toBeTruthy();
+  expect(screen.queryByText('Дамира Токтосунова ждёт роль')).toBeNull();
 });

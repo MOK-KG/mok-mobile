@@ -55,6 +55,10 @@ describe('routeFor', () => {
     expect(routeFor({ target: 'mailQueue' })).toBe('/tasks/queue');
   });
 
+  it('opens the staff card', () => {
+    expect(routeFor({ target: 'staff', staffId: '41' })).toBe('/access/41');
+  });
+
   it('falls back to the notification list', () => {
     expect(routeFor({ target: null })).toBe('/notifications');
     expect(routeFor(undefined)).toBe('/notifications');

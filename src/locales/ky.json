@@ -372,7 +372,10 @@
       "openai_key_missing": "Серверде OpenAI ачкычы (OPENAI_API_KEY) коюлган эмес.",
       "agent_failed": "Модель жооп берген жок. Кайра аракет кылыңыз.",
       "invalid_value": "Жараксыз маани.",
-      "project_exists": "Мындай долбоор бар"
+      "project_exists": "Мындай долбоор бар",
+      "current_session": "Учурдагы сессияны мындай жабууга болбойт — системадан чыгыңыз.",
+      "session_not_found": "Сессия буга чейин жабылган.",
+      "permission_unknown": "Мындай укук жок."
     }
   },
   "toast": {
@@ -704,7 +707,20 @@
       "journal.view": "Аракеттер журналын көрүү",
       "journal.export": "Журналды жүктөп алуу",
       "assistant.manage": "ЖИ жана почта агентин жөндөө"
-    }
+    },
+    "matrixEditHint": "Укукту берүү же алуу үчүн уячаны басыңыз. Өзгөрүүлөр сактагандан кийин күчүнө кирет.",
+    "matrixChanges_one": "{{count}} өзгөрүү",
+    "matrixChanges_other": "{{count}} өзгөрүү",
+    "matrixSave": "Сактоо",
+    "matrixReset": "Жокко чыгаруу",
+    "matrixConfirmTitle": "Ролдордун укуктарын өзгөртөсүзбү?",
+    "matrixConfirmText": "Бул ролдогу бардык кызматкерлердин укуктары дароо, кайра кирбестен өзгөрөт. Өзгөрүү аракеттер журналына жазылат.",
+    "matrixSaved": "Ролдордун укуктары сакталды",
+    "matrixGrant": "берүү",
+    "matrixRevoke": "алуу",
+    "endOwnSessionText": "«{{device}}» түзмөгүндөгү сессия жабылат. Google аркылуу кайра кирсе болот.",
+    "endOwnAllText": "Калган бардык сессиялар жабылат: {{count}}. Бул түзмөк системада калат.",
+    "endOthers": "Калгандарынан чыгуу"
   },
   "chat": {
     "title": "Чат",
@@ -781,7 +797,8 @@
       "mailQueue": "Почтадан келген каттар",
       "mention": "Чаттагы эскерүүлөр",
       "reminder": "Мөөнөт эскертмелери",
-      "done": "Аяктаган тапшырмалар"
+      "done": "Аяктаган тапшырмалар",
+      "pendingUser": "Ролу жок жаңы кызматкерлер"
     },
     "titles": {
       "assigned": "Жаңы тапшырма · «{{task}}»",
@@ -789,7 +806,8 @@
       "overdue": "Мөөнөтү өттү · «{{task}}»",
       "mention": "{{actor}} сизди чатта белгиледи",
       "reminder": "Эскертме · «{{task}}»",
-      "done": "«{{task}}» аткарылды"
+      "done": "«{{task}}» аткарылды",
+      "pendingUser": "{{name}} ролду күтүүдө"
     },
     "texts": {
       "assignedBy": "Койгон: {{actor}}",
@@ -799,7 +817,8 @@
       "overdue_assignee": "Мөөнөтү {{date}} болчу. Сиз — аткаруучу.",
       "overdue_author": "Мөөнөтү {{date}} болчу. Сиз — тапшырма берүүчү.",
       "mention": "{{chat}} — {{excerpt}}",
-      "done": "{{actor}} тапшырманы «{{column}}» тилкесине которду."
+      "done": "{{actor}} тапшырманы «{{column}}» тилкесине которду.",
+      "pendingUser": "{{email}} · Google аркылуу кирди, ролу дайындала элек."
     },
     "escalationLocked": "Ар дайым келет — платформанын эрежеси",
     "settingsSaved": "Билдирме жөндөөлөрү сакталды",
@@ -816,7 +835,8 @@
     "emptyUnread": "Баары окулду",
     "emptyMentions": "Эскерүү жок",
     "showAll": "Бардык билдирмелер",
-    "taskGone": "Тапшырма табылган жок — балким, ал жабылгандыр"
+    "taskGone": "Тапшырма табылган жок — балким, ал жабылгандыр",
+    "assignRole": "Ролду дайындоо"
   },
   "dashboard": {
     "greeting": {
@@ -1194,7 +1214,8 @@
       "absenceCreated": "Жоктук тариздеди",
       "absenceCancelled": "Жоктук жокко чыгарылды",
       "sessionEnded": "Сессия аяктады",
-      "documentBounced": "Кат жеткирилген жок"
+      "documentBounced": "Кат жеткирилген жок",
+      "rolePermissionsChanged": "Ролдун укуктары өзгөрдү"
     },
     "integrityOk_one": "Чынжыр бүтүн · {{count}} жазуу текшерилди",
     "integrityOk_other": "Чынжыр бүтүн · {{count}} жазуу текшерилди",

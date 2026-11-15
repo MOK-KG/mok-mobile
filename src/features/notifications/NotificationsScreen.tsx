@@ -13,6 +13,7 @@ import { type ThemeColorName, themes } from '@/shared/config/tokens';
 import { formatIsoDate, relativeShort } from '@/shared/lib/date';
 import { diffDays, todayInBishkek } from '@/shared/lib/workDays';
 import {
+  AccessIcon,
   AtSignIcon,
   BellIcon,
   BoltIcon,
@@ -44,6 +45,7 @@ const kinds: Record<
   mention: { Icon: AtSignIcon, stripe: 'bg-info', color: 'info' },
   reminder: { Icon: BellIcon, stripe: 'bg-info', color: 'sub' },
   done: { Icon: CheckSmallIcon, stripe: 'bg-success', color: 'success' },
+  pendingUser: { Icon: AccessIcon, stripe: 'bg-warning', color: 'warning' },
 };
 
 type Filter = 'all' | 'unread' | 'mentions';
@@ -198,15 +200,18 @@ function NotificationRow({
       ? t('notifications.openTask')
       : target.kind === 'mailQueue'
         ? t('notifications.review')
-        : chats?.find((c) => c.id === target.chatId)?.kind === 'direct'
-          ? t('notifications.openChat')
-          : t('notifications.openChannel');
+        : target.kind === 'staff'
+          ? t('notifications.assignRole')
+          : chats?.find((c) => c.id === target.chatId)?.kind === 'direct'
+            ? t('notifications.openChat')
+            : t('notifications.openChannel');
 
   const open = () => {
     if (!target) return;
     if (!n.read) markRead.mutate(n.id);
     if (target.kind === 'task') openTask(target.taskTitle);
     else if (target.kind === 'mailQueue') router.push('/tasks/queue');
+    else if (target.kind === 'staff') router.push(`/access/${target.staffId}`);
     else router.push(`/chat/${target.chatId}`);
   };
 

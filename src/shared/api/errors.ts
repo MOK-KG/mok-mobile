@@ -83,6 +83,9 @@ export const knownErrorCodes = [
   'agent_failed',
   'invalid_value',
   'project_exists',
+  'current_session',
+  'session_not_found',
+  'permission_unknown',
 ] as const;
 
 /**

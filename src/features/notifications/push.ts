@@ -21,6 +21,7 @@ export function routeFor(data: Record<string, unknown> | undefined): Href {
   if (typeof data?.taskId === 'string') return `/tasks/${data.taskId}`;
   if (typeof data?.chatId === 'string') return `/chat/${data.chatId}`;
   if (data?.target === 'mailQueue') return '/tasks/queue';
+  if (typeof data?.staffId === 'string') return `/access/${data.staffId}`;
   return '/notifications';
 }
 

@@ -372,7 +372,10 @@
       "openai_key_missing": "The OpenAI key (OPENAI_API_KEY) is not set on the server.",
       "agent_failed": "The model did not respond. Try again.",
       "invalid_value": "Invalid value.",
-      "project_exists": "This project already exists"
+      "project_exists": "This project already exists",
+      "current_session": "The current session can’t be ended this way — sign out instead.",
+      "session_not_found": "The session has already ended.",
+      "permission_unknown": "No such permission."
     }
   },
   "toast": {
@@ -704,7 +707,20 @@
       "journal.view": "View audit log",
       "journal.export": "Export audit log",
       "assistant.manage": "Configure AI and mail agent"
-    }
+    },
+    "matrixEditHint": "Click a cell to grant or revoke a permission. Changes apply after saving.",
+    "matrixChanges_one": "{{count}} change",
+    "matrixChanges_other": "{{count}} changes",
+    "matrixSave": "Save",
+    "matrixReset": "Discard",
+    "matrixConfirmTitle": "Change role permissions?",
+    "matrixConfirmText": "Permissions change for everyone with these roles right away, without signing in again. The change is recorded in the action log.",
+    "matrixSaved": "Role permissions saved",
+    "matrixGrant": "grant",
+    "matrixRevoke": "revoke",
+    "endOwnSessionText": "The session on “{{device}}” will be closed. You can sign in again with Google.",
+    "endOwnAllText": "All other sessions will be closed: {{count}}. This device stays signed in.",
+    "endOthers": "Sign out elsewhere"
   },
   "chat": {
     "title": "Chat",
@@ -781,7 +797,8 @@
       "mailQueue": "Emails in the queue",
       "mention": "Chat mentions",
       "reminder": "Deadline reminders",
-      "done": "Completed tasks"
+      "done": "Completed tasks",
+      "pendingUser": "New staff without a role"
     },
     "titles": {
       "assigned": "New task · “{{task}}”",
@@ -789,7 +806,8 @@
       "overdue": "Overdue · “{{task}}”",
       "mention": "{{actor}} mentioned you in chat",
       "reminder": "Reminder · “{{task}}”",
-      "done": "“{{task}}” completed"
+      "done": "“{{task}}” completed",
+      "pendingUser": "{{name}} is waiting for a role"
     },
     "texts": {
       "assignedBy": "Assigned by {{actor}}",
@@ -799,7 +817,8 @@
       "overdue_assignee": "The deadline was {{date}}. You are the assignee.",
       "overdue_author": "The deadline was {{date}}. You set this task.",
       "mention": "{{chat}} — {{excerpt}}",
-      "done": "{{actor}} moved the task to “{{column}}”."
+      "done": "{{actor}} moved the task to “{{column}}”.",
+      "pendingUser": "{{email}} · signed in with Google, no role assigned."
     },
     "escalationLocked": "Always on — a platform rule",
     "settingsSaved": "Notification settings saved",
@@ -816,7 +835,8 @@
     "emptyUnread": "All read",
     "emptyMentions": "No mentions",
     "showAll": "All notifications",
-    "taskGone": "Task not found — it may have been closed"
+    "taskGone": "Task not found — it may have been closed",
+    "assignRole": "Assign role"
   },
   "dashboard": {
     "greeting": {
@@ -1194,7 +1214,8 @@
       "absenceCreated": "Absence recorded",
       "absenceCancelled": "Absence cancelled",
       "sessionEnded": "Session ended",
-      "documentBounced": "Delivery failure"
+      "documentBounced": "Delivery failure",
+      "rolePermissionsChanged": "Role permissions changed"
     },
     "integrityOk_one": "Chain intact · {{count}} entry checked",
     "integrityOk_other": "Chain intact · {{count}} entries checked",
