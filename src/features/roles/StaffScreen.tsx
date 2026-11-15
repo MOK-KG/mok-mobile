@@ -65,13 +65,22 @@ function Body({ m }: { m: StaffRow }) {
 
   const pickRole = (role: RoleCode) => {
     if (role === m.role) return;
-    const apply = () => changeRole.mutate({ id: m.id, role });
-    if (m.isMe) {
-      Alert.alert(t('access.role'), t('access.ownRoleConfirm', { role }), [
+    const text = t('access.changeRoleText', {
+      name: m.short ?? m.name ?? m.position,
+      from: `${m.role} ${t(`access.roles.${m.role}`)}`,
+      to: `${role} ${t(`access.roles.${role}`)}`,
+    });
+    Alert.alert(
+      t('access.changeRoleTitle'),
+      m.isMe ? `${text}\n\n${t('access.changeRoleOwn')}` : text,
+      [
         { text: t('access.cancel'), style: 'cancel' },
-        { text: t('access.role'), onPress: apply },
-      ]);
-    } else apply();
+        {
+          text: t('access.changeRoleConfirm'),
+          onPress: () => changeRole.mutate({ id: m.id, role }),
+        },
+      ],
+    );
   };
 
   return (
@@ -176,20 +185,37 @@ function Dismissal({ m }: { m: StaffRow }) {
           {t('access.cannotDeactivateSelf')}
         </Text>
       ) : (
-        <Pressable
-          accessibilityRole="button"
-          disabled={deactivate.isPending}
-          onPress={() => (confirming ? deactivate.mutate(m.id) : setConfirming(true))}
-          className={`h-11 items-center justify-center rounded-9 ${
-            confirming ? 'bg-brand-red' : 'border border-danger-line'
-          } ${deactivate.isPending ? 'opacity-50' : ''}`}
-        >
-          <Text
-            className={`font-semibold text-[13.5px] ${confirming ? 'text-[#FFFFFF]' : 'text-danger'}`}
+        <View className="gap-2">
+          <Pressable
+            accessibilityRole="button"
+            disabled={deactivate.isPending}
+            onPress={() =>
+              confirming
+                ? deactivate.mutate(m.id, { onError: () => setConfirming(false) })
+                : setConfirming(true)
+            }
+            className={`h-11 items-center justify-center rounded-9 ${
+              confirming ? 'bg-brand-red' : 'border border-danger-line'
+            } ${deactivate.isPending ? 'opacity-50' : ''}`}
           >
-            {confirming ? t('access.confirmDeactivate', { name: m.short }) : t('access.deactivate')}
-          </Text>
-        </Pressable>
+            <Text
+              className={`font-semibold text-[13.5px] ${confirming ? 'text-[#FFFFFF]' : 'text-danger'}`}
+            >
+              {confirming
+                ? t('access.confirmDeactivate', { name: m.short })
+                : t('access.deactivate')}
+            </Text>
+          </Pressable>
+          {confirming && (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setConfirming(false)}
+              className="h-11 items-center justify-center rounded-9 border border-line"
+            >
+              <Text className="font-medium text-[13.5px] text-sub">{t('access.cancel')}</Text>
+            </Pressable>
+          )}
+        </View>
       )}
       <Text className="font-regular text-[11px] text-dim">{t('access.cannotDelete')}</Text>
     </View>
