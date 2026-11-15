@@ -17,20 +17,21 @@ const roleTone: Partial<Record<RoleCode, Tone>> = {
   R8: 'violet',
 };
 
-export function RoleChip({ role }: { role: RoleCode }) {
-  const tone = roleTone[role];
+export function RoleChip({ role }: { role: RoleCode | null }) {
+  const tone = role ? roleTone[role] : undefined;
   return (
     <Text
       className={`overflow-hidden rounded-[5px] border px-[5px] py-[1px] font-semibold text-[10.5px] ${
         tone ? `${toneClasses[tone].text} border-current` : 'border-line text-sub'
       }`}
     >
-      {role}
+      {role ?? '—'}
     </Text>
   );
 }
 
 const badgeTone: Record<StaffBadge, string> = {
+  pending: 'bg-warning-chip text-warning-text',
   active: 'bg-success-chip text-success',
   vacation: 'bg-info-chip text-info',
   invited: 'bg-warning-chip text-warning-text',

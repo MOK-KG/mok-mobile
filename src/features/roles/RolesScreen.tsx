@@ -21,11 +21,13 @@ export function RolesScreen() {
   const staff = useStaff();
   const [query, setQuery] = useState('');
   const [role, setRole] = useState<RoleCode | null>(null);
-  const rows = staff.data ?? [];
+  const rows = [...(staff.data ?? [])].sort(
+    (a, b) => Number(b.status === 'pending') - Number(a.status === 'pending'),
+  );
   const needle = query.trim().toLocaleLowerCase('ru');
   const matches = (r: (typeof rows)[number]) =>
     !needle ||
-    [r.name, r.email, r.position, t(`access.roles.${r.role}`)].some((v) =>
+    [r.name, r.email, r.position, r.role ? t(`access.roles.${r.role}`) : ''].some((v) =>
       v?.toLocaleLowerCase('ru').includes(needle),
     );
   const shown = rows.filter((r) => (!role || r.role === role) && matches(r));
@@ -94,8 +96,11 @@ export function RolesScreen() {
                 {r.name ?? t('access.vacant')}
                 {r.isMe && <Text className="text-faint"> · {t('access.you')}</Text>}
               </Text>
-              <Text numberOfLines={1} className="font-regular text-[12px] text-sub">
-                {r.position}
+              <Text
+                numberOfLines={1}
+                className={`font-regular text-[12px] ${r.role ? 'text-sub' : 'text-warning-text'}`}
+              >
+                {r.role ? r.position : t('access.noRole')}
               </Text>
             </View>
             <View className="items-end gap-1">

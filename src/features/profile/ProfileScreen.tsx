@@ -5,13 +5,16 @@ import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { useCurrentAbsences } from '@/features/absences/api';
-import { useSession } from '@/features/auth';
+import { useCan, useSession } from '@/features/auth';
 import {
+  lockedNotificationKinds,
   type NotificationSettings,
   notificationKinds,
   useNotificationSettings,
   useSaveNotificationSettings,
 } from '@/features/notifications/api';
+import { useEndOwnSession, useOwnSessions } from '@/features/roles/api';
+import { SessionList } from '@/features/roles/SessionList';
 import type { RoleCode } from '@/shared/config/permissions';
 import { themes } from '@/shared/config/tokens';
 import { formatIsoDate } from '@/shared/lib/date';
@@ -24,6 +27,7 @@ export function ProfileScreen() {
   const { t, i18n } = useTranslation();
   const palette = themes[useTheme().theme];
   const user = useSession().data?.user;
+  const { can } = useCan();
   const currentUserId = user?.id;
   const settings = useNotificationSettings().data;
   const save = useSaveNotificationSettings();
@@ -66,33 +70,35 @@ export function ProfileScreen() {
           <Text className="font-regular text-[12px] leading-4 text-faint">
             {t('notifications.settingsHint')}
           </Text>
-          {notificationKinds.map((k) => {
-            const locked = k === 'escalation';
-            const on = locked || !!draft?.[k];
-            return (
-              <View key={k} className="flex-row items-center gap-3 border-t border-line pt-2">
-                <View className="flex-1">
-                  <Text className="font-regular text-[13.5px] text-text">
-                    {t(`notifications.kinds.${k}`)}
-                  </Text>
-                  {locked && (
-                    <Text className="font-regular text-[11px] text-dim">
-                      {t('notifications.escalationLocked')}
+          {notificationKinds
+            .filter((k) => k !== 'pendingUser' || can('roles.assign'))
+            .map((k) => {
+              const locked = lockedNotificationKinds.includes(k);
+              const on = locked || !!draft?.[k];
+              return (
+                <View key={k} className="flex-row items-center gap-3 border-t border-line pt-2">
+                  <View className="flex-1">
+                    <Text className="font-regular text-[13.5px] text-text">
+                      {t(`notifications.kinds.${k}`)}
                     </Text>
-                  )}
+                    {locked && (
+                      <Text className="font-regular text-[11px] text-dim">
+                        {t('notifications.escalationLocked')}
+                      </Text>
+                    )}
+                  </View>
+                  <Switch
+                    accessibilityLabel={t(`notifications.kinds.${k}`)}
+                    value={on}
+                    disabled={locked}
+                    onValueChange={(v) => {
+                      if (draft) setDraft({ ...draft, [k]: v });
+                    }}
+                    trackColor={{ true: palette.info, false: palette.chip }}
+                  />
                 </View>
-                <Switch
-                  accessibilityLabel={t(`notifications.kinds.${k}`)}
-                  value={on}
-                  disabled={locked}
-                  onValueChange={(v) => {
-                    if (draft) setDraft({ ...draft, [k]: v });
-                  }}
-                  trackColor={{ true: palette.info, false: palette.chip }}
-                />
-              </View>
-            );
-          })}
+              );
+            })}
           <Pressable
             accessibilityRole="button"
             disabled={!dirty || save.isPending}
@@ -104,6 +110,8 @@ export function ProfileScreen() {
             <Text className="font-semibold text-[13.5px] text-[#FFFFFF]">{t('profile.save')}</Text>
           </Pressable>
         </View>
+
+        <MySessions />
 
         <View className="gap-2 rounded-14 border border-line bg-panel p-4">
           <Text className={caps}>{t('absences.title')}</Text>
@@ -133,5 +141,23 @@ export function ProfileScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function MySessions() {
+  const { t } = useTranslation();
+  const sessions = useOwnSessions();
+  const end = useEndOwnSession();
+  if (sessions.data === null) return null;
+  return (
+    <SessionList
+      list={sessions.data}
+      canEnd
+      unavailable={t('access.devicesUnavailable')}
+      endAllLabel={t('access.endOthers')}
+      sessionText={(s) => t('access.endOwnSessionText', { device: s.device })}
+      allText={(count) => t('access.endOwnAllText', { count })}
+      onEnd={(sessionId) => end.mutate(sessionId)}
+    />
   );
 }

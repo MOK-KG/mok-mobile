@@ -8,6 +8,7 @@ import { useTheme } from '@/app/providers/ThemeProvider';
 import { RequirePermission } from '@/features/auth';
 import { themes } from '@/shared/config/tokens';
 import { formatIsoDate } from '@/shared/lib/date';
+import { Banner } from '@/shared/ui/Banner';
 import { TabHeader } from '@/shared/ui/TabHeader';
 import { docNumber, useDocuments } from './api';
 import { StatusChip } from './parts';
@@ -128,6 +129,11 @@ function List() {
       <FlashList
         data={shown}
         keyExtractor={(d) => d.id}
+        ListHeaderComponent={
+          <View className="px-4 pb-3 pt-3">
+            <Banner tone="info" title={t('documents.infoTitle')} text={t('documents.infoText')} />
+          </View>
+        }
         renderItem={({ item: d }) => (
           <Pressable
             accessibilityRole="button"

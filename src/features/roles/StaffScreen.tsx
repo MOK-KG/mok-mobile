@@ -7,8 +7,16 @@ import { Choices } from '@/features/tasks/parts';
 import { type RoleCode, roleCodes } from '@/shared/config/permissions';
 import { formatInBishkek, formatIsoDate } from '@/shared/lib/date';
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
-import { type StaffRow, useChangeRole, useDeactivate, useStaff } from './api';
+import {
+  type StaffRow,
+  useChangeRole,
+  useDeactivate,
+  useEndSession,
+  useMemberSessions,
+  useStaff,
+} from './api';
 import { RoleChip, StaffAvatar, StatusBadge } from './parts';
+import { SessionList } from './SessionList';
 
 const caps = 'font-semibold text-[10px] uppercase tracking-[1.4px] text-dim';
 
@@ -35,10 +43,15 @@ function Body({ m }: { m: StaffRow }) {
   const { t, i18n } = useTranslation();
   const { can } = useCan();
   const changeRole = useChangeRole();
-  const active = m.status === 'active' || m.status === 'invited';
+  const active = m.status === 'active' || m.status === 'invited' || m.status === 'pending';
   const rows: [string, string][] = [
-    [t('access.position'), m.position],
-    [t('access.department'), t('access.departmentOf', { name: m.department })],
+    ...(m.position ? ([[t('access.position'), m.position]] as [string, string][]) : []),
+    ...(m.department
+      ? ([[t('access.department'), t('access.departmentOf', { name: m.department })]] as [
+          string,
+          string,
+        ][])
+      : []),
     ...(m.email ? ([['E-mail', m.email]] as [string, string][]) : []),
     ...(m.invitedAt
       ? ([[t('access.invitedAt'), formatIsoDate(m.invitedAt, 'd MMMM yyyy', i18n.language)]] as [
@@ -52,10 +65,7 @@ function Body({ m }: { m: StaffRow }) {
         ? formatInBishkek(m.firstLoginAt, 'd MMM yyyy, HH:mm', i18n.language)
         : t('access.neverLoggedIn'),
     ],
-    [
-      t('access.sessions'),
-      m.sessions ? t('access.devices', { count: m.sessions }) : t('access.noSessions'),
-    ],
+
     [
       t('access.activeTasks'),
       `${m.plan.tasks}${m.plan.escalated ? ` · ${t('access.withEscalation')}` : ''}`,
@@ -65,13 +75,25 @@ function Body({ m }: { m: StaffRow }) {
 
   const pickRole = (role: RoleCode) => {
     if (role === m.role) return;
-    const apply = () => changeRole.mutate({ id: m.id, role });
-    if (m.isMe) {
-      Alert.alert(t('access.role'), t('access.ownRoleConfirm', { role }), [
+    const to = `${role} ${t(`access.roles.${role}`)}`;
+    const text = m.role
+      ? t('access.changeRoleText', {
+          name: m.short ?? m.name ?? m.position,
+          from: `${m.role} ${t(`access.roles.${m.role}`)}`,
+          to,
+        })
+      : t('access.assignRoleText', { name: m.short ?? m.name ?? m.email, to });
+    Alert.alert(
+      m.role ? t('access.changeRoleTitle') : t('access.assignRoleTitle'),
+      m.isMe ? `${text}\n\n${t('access.changeRoleOwn')}` : text,
+      [
         { text: t('access.cancel'), style: 'cancel' },
-        { text: t('access.role'), onPress: apply },
-      ]);
-    } else apply();
+        {
+          text: m.role ? t('access.changeRoleConfirm') : t('access.assignRole'),
+          onPress: () => changeRole.mutate({ id: m.id, role }),
+        },
+      ],
+    );
   };
 
   return (
@@ -84,7 +106,9 @@ function Body({ m }: { m: StaffRow }) {
         </Text>
         <View className="flex-row items-center gap-2">
           <RoleChip role={m.role} />
-          <Text className="font-regular text-[12.5px] text-sub">{t(`access.roles.${m.role}`)}</Text>
+          <Text className="font-regular text-[12.5px] text-sub">
+            {m.role ? t(`access.roles.${m.role}`) : t('access.noRole')}
+          </Text>
           <StatusBadge badge={m.badge} />
         </View>
       </View>
@@ -101,6 +125,13 @@ function Body({ m }: { m: StaffRow }) {
       {active && can('roles.assign') && (
         <View className="gap-2 rounded-14 border border-line bg-panel p-4">
           <Text className={caps}>{t('access.role')}</Text>
+          {m.status === 'pending' && m.firstLoginAt && (
+            <Text className="rounded-9 border border-warning-line bg-warning-soft px-3 py-[9px] font-regular text-[11.5px] leading-4 text-warning-text">
+              {t('access.pendingHint', {
+                date: formatInBishkek(m.firstLoginAt, 'd MMM yyyy, HH:mm', i18n.language),
+              })}
+            </Text>
+          )}
           <Choices
             label={t('access.role')}
             value={m.role}
@@ -110,9 +141,11 @@ function Body({ m }: { m: StaffRow }) {
               label: `${r} · ${t(`access.roles.${r}`)}`,
             }))}
           />
-          <Text className="font-regular text-[11.5px] leading-4 text-faint">
-            {t('access.roleHints.' + m.role)}
-          </Text>
+          {m.role && (
+            <Text className="font-regular text-[11.5px] leading-4 text-faint">
+              {t(`access.roleHints.${m.role}`)}
+            </Text>
+          )}
           <Text className="font-medium text-[12px] text-success">{t('access.immediate')}</Text>
           <Text className="font-regular text-[11.5px] leading-4 text-faint">
             {t('access.immediateHint')}
@@ -135,6 +168,8 @@ function Body({ m }: { m: StaffRow }) {
           </Text>
         </View>
       )}
+
+      {(m.status === 'active' || m.status === 'pending') && <Sessions m={m} />}
 
       {active && can('staff.deactivate') && <Dismissal m={m} />}
     </ScrollView>
@@ -176,22 +211,60 @@ function Dismissal({ m }: { m: StaffRow }) {
           {t('access.cannotDeactivateSelf')}
         </Text>
       ) : (
-        <Pressable
-          accessibilityRole="button"
-          disabled={deactivate.isPending}
-          onPress={() => (confirming ? deactivate.mutate(m.id) : setConfirming(true))}
-          className={`h-11 items-center justify-center rounded-9 ${
-            confirming ? 'bg-brand-red' : 'border border-danger-line'
-          } ${deactivate.isPending ? 'opacity-50' : ''}`}
-        >
-          <Text
-            className={`font-semibold text-[13.5px] ${confirming ? 'text-[#FFFFFF]' : 'text-danger'}`}
+        <View className="gap-2">
+          <Pressable
+            accessibilityRole="button"
+            disabled={deactivate.isPending}
+            onPress={() =>
+              confirming
+                ? deactivate.mutate(m.id, { onError: () => setConfirming(false) })
+                : setConfirming(true)
+            }
+            className={`h-11 items-center justify-center rounded-9 ${
+              confirming ? 'bg-brand-red' : 'border border-danger-line'
+            } ${deactivate.isPending ? 'opacity-50' : ''}`}
           >
-            {confirming ? t('access.confirmDeactivate', { name: m.short }) : t('access.deactivate')}
-          </Text>
-        </Pressable>
+            <Text
+              className={`font-semibold text-[13.5px] ${confirming ? 'text-[#FFFFFF]' : 'text-danger'}`}
+            >
+              {confirming
+                ? t('access.confirmDeactivate', { name: m.short })
+                : t('access.deactivate')}
+            </Text>
+          </Pressable>
+          {confirming && (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setConfirming(false)}
+              className="h-11 items-center justify-center rounded-9 border border-line"
+            >
+              <Text className="font-medium text-[13.5px] text-sub">{t('access.cancel')}</Text>
+            </Pressable>
+          )}
+        </View>
       )}
       <Text className="font-regular text-[11px] text-dim">{t('access.cannotDelete')}</Text>
     </View>
+  );
+}
+
+function Sessions({ m }: { m: StaffRow }) {
+  const { t } = useTranslation();
+  const { can } = useCan();
+  const sessions = useMemberSessions(m.id);
+  const end = useEndSession();
+  const name = m.short ?? m.name ?? m.email ?? '';
+  return (
+    <SessionList
+      list={sessions.data}
+      canEnd={can('staff.deactivate')}
+      unavailable={`${
+        m.sessions > 0 ? t('access.devices', { count: m.sessions }) : t('access.noSessions')
+      } · ${t('access.devicesUnavailable')}`}
+      endAllLabel={t('access.endAllSessions')}
+      sessionText={(s) => t('access.endSessionText', { name, device: s.device })}
+      allText={(count) => t('access.endAllText', { name, count })}
+      onEnd={(sessionId) => end.mutate({ memberId: m.id, sessionId })}
+    />
   );
 }

@@ -24,6 +24,8 @@ export type JournalAction =
   | 'userDeactivated'
   | 'absenceCreated'
   | 'absenceCancelled'
+  | 'sessionEnded'
+  | 'rolePermissionsChanged'
   | 'documentRegistered'
   | 'documentSent'
   | 'documentResolved'
@@ -35,7 +37,15 @@ export type JournalAction =
 /** Группы действий — для фильтра на экране журнала */
 export const journalGroups = {
   access: ['accessDenied'],
-  staff: ['roleChanged', 'userInvited', 'userDeactivated', 'absenceCreated', 'absenceCancelled'],
+  staff: [
+    'roleChanged',
+    'userInvited',
+    'userDeactivated',
+    'sessionEnded',
+    'rolePermissionsChanged',
+    'absenceCreated',
+    'absenceCancelled',
+  ],
   tasks: ['mailRejected', 'mailAccepted'],
   documents: [
     'documentRegistered',

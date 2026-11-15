@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { themes } from '@/shared/config/tokens';
 import { formatInBishkek } from '@/shared/lib/date';
+import { Banner } from '@/shared/ui/Banner';
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
 import { useFiles } from './api';
 import {
@@ -145,10 +146,10 @@ export function FilesScreen() {
             </Text>
           )
         }
-        ListFooterComponent={
-          <Text className="px-4 py-4 font-regular text-[11.5px] leading-4 text-dim">
-            {t('files.note')}
-          </Text>
+        ListHeaderComponent={
+          <View className="px-4 pb-3 pt-1">
+            <Banner tone="info" title={t('files.infoTitle')} text={t('files.infoText')} />
+          </View>
         }
       />
     </SafeAreaView>
