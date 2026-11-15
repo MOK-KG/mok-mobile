@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
 type Props = {
-  tone: 'danger' | 'warning';
+  tone: 'danger' | 'warning' | 'info';
   title: string;
   text: string;
   /** Действие под разделителем, например «Обновить статус» */
@@ -19,6 +19,11 @@ const tones = {
     box: 'bg-warning-soft border-warning-line',
     stripe: 'bg-brand-gold',
     title: 'text-warning',
+  },
+  info: {
+    box: 'bg-info-chip border-info-line',
+    stripe: 'bg-info',
+    title: 'text-info',
   },
 } as const;
 
