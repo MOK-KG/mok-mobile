@@ -6,9 +6,9 @@ import { useTheme } from '@/app/providers/ThemeProvider';
 import type { Language } from '@/shared/config/i18n';
 import { links } from '@/shared/config/links';
 import { brand, themes } from '@/shared/config/tokens';
+import { BrandLogo } from '@/shared/ui/BrandLogo';
 import { Glow } from '@/shared/ui/Glow';
 import { LanguageSwitcher } from '@/shared/ui/LanguageSwitcher';
-import { OlympicRings } from '@/shared/ui/OlympicRings';
 import { ThemeSwitch } from '@/shared/ui/ThemeSwitch';
 
 // Свечения из макета: цвет и непрозрачность центра для каждой темы
@@ -79,7 +79,7 @@ export function AuthScreen({ children, footerNote, footerExtra }: Props) {
           </View>
 
           <View className="mt-[38px]">
-            <OlympicRings theme={theme} />
+            <BrandLogo theme={theme} height={96} />
           </View>
           <Text className="mt-[22px] font-semibold text-[9.5px] tracking-[1.5px] text-faint">
             {t('auth.orgName')}
