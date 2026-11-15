@@ -7,7 +7,15 @@ import { Choices } from '@/features/tasks/parts';
 import { type RoleCode, roleCodes } from '@/shared/config/permissions';
 import { formatInBishkek, formatIsoDate } from '@/shared/lib/date';
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
-import { type StaffRow, useChangeRole, useDeactivate, useStaff } from './api';
+import {
+  type StaffRow,
+  type StaffSession,
+  useChangeRole,
+  useDeactivate,
+  useEndSession,
+  useMemberSessions,
+  useStaff,
+} from './api';
 import { RoleChip, StaffAvatar, StatusBadge } from './parts';
 
 const caps = 'font-semibold text-[10px] uppercase tracking-[1.4px] text-dim';
@@ -35,10 +43,15 @@ function Body({ m }: { m: StaffRow }) {
   const { t, i18n } = useTranslation();
   const { can } = useCan();
   const changeRole = useChangeRole();
-  const active = m.status === 'active' || m.status === 'invited';
+  const active = m.status === 'active' || m.status === 'invited' || m.status === 'pending';
   const rows: [string, string][] = [
-    [t('access.position'), m.position],
-    [t('access.department'), t('access.departmentOf', { name: m.department })],
+    ...(m.position ? ([[t('access.position'), m.position]] as [string, string][]) : []),
+    ...(m.department
+      ? ([[t('access.department'), t('access.departmentOf', { name: m.department })]] as [
+          string,
+          string,
+        ][])
+      : []),
     ...(m.email ? ([['E-mail', m.email]] as [string, string][]) : []),
     ...(m.invitedAt
       ? ([[t('access.invitedAt'), formatIsoDate(m.invitedAt, 'd MMMM yyyy', i18n.language)]] as [
@@ -52,10 +65,7 @@ function Body({ m }: { m: StaffRow }) {
         ? formatInBishkek(m.firstLoginAt, 'd MMM yyyy, HH:mm', i18n.language)
         : t('access.neverLoggedIn'),
     ],
-    [
-      t('access.sessions'),
-      m.sessions ? t('access.devices', { count: m.sessions }) : t('access.noSessions'),
-    ],
+
     [
       t('access.activeTasks'),
       `${m.plan.tasks}${m.plan.escalated ? ` · ${t('access.withEscalation')}` : ''}`,
@@ -65,18 +75,21 @@ function Body({ m }: { m: StaffRow }) {
 
   const pickRole = (role: RoleCode) => {
     if (role === m.role) return;
-    const text = t('access.changeRoleText', {
-      name: m.short ?? m.name ?? m.position,
-      from: `${m.role} ${t(`access.roles.${m.role}`)}`,
-      to: `${role} ${t(`access.roles.${role}`)}`,
-    });
+    const to = `${role} ${t(`access.roles.${role}`)}`;
+    const text = m.role
+      ? t('access.changeRoleText', {
+          name: m.short ?? m.name ?? m.position,
+          from: `${m.role} ${t(`access.roles.${m.role}`)}`,
+          to,
+        })
+      : t('access.assignRoleText', { name: m.short ?? m.name ?? m.email, to });
     Alert.alert(
-      t('access.changeRoleTitle'),
+      m.role ? t('access.changeRoleTitle') : t('access.assignRoleTitle'),
       m.isMe ? `${text}\n\n${t('access.changeRoleOwn')}` : text,
       [
         { text: t('access.cancel'), style: 'cancel' },
         {
-          text: t('access.changeRoleConfirm'),
+          text: m.role ? t('access.changeRoleConfirm') : t('access.assignRole'),
           onPress: () => changeRole.mutate({ id: m.id, role }),
         },
       ],
@@ -93,7 +106,9 @@ function Body({ m }: { m: StaffRow }) {
         </Text>
         <View className="flex-row items-center gap-2">
           <RoleChip role={m.role} />
-          <Text className="font-regular text-[12.5px] text-sub">{t(`access.roles.${m.role}`)}</Text>
+          <Text className="font-regular text-[12.5px] text-sub">
+            {m.role ? t(`access.roles.${m.role}`) : t('access.noRole')}
+          </Text>
           <StatusBadge badge={m.badge} />
         </View>
       </View>
@@ -110,6 +125,13 @@ function Body({ m }: { m: StaffRow }) {
       {active && can('roles.assign') && (
         <View className="gap-2 rounded-14 border border-line bg-panel p-4">
           <Text className={caps}>{t('access.role')}</Text>
+          {m.status === 'pending' && m.firstLoginAt && (
+            <Text className="rounded-9 border border-warning-line bg-warning-soft px-3 py-[9px] font-regular text-[11.5px] leading-4 text-warning-text">
+              {t('access.pendingHint', {
+                date: formatInBishkek(m.firstLoginAt, 'd MMM yyyy, HH:mm', i18n.language),
+              })}
+            </Text>
+          )}
           <Choices
             label={t('access.role')}
             value={m.role}
@@ -119,9 +141,11 @@ function Body({ m }: { m: StaffRow }) {
               label: `${r} · ${t(`access.roles.${r}`)}`,
             }))}
           />
-          <Text className="font-regular text-[11.5px] leading-4 text-faint">
-            {t('access.roleHints.' + m.role)}
-          </Text>
+          {m.role && (
+            <Text className="font-regular text-[11.5px] leading-4 text-faint">
+              {t(`access.roleHints.${m.role}`)}
+            </Text>
+          )}
           <Text className="font-medium text-[12px] text-success">{t('access.immediate')}</Text>
           <Text className="font-regular text-[11.5px] leading-4 text-faint">
             {t('access.immediateHint')}
@@ -144,6 +168,8 @@ function Body({ m }: { m: StaffRow }) {
           </Text>
         </View>
       )}
+
+      {(m.status === 'active' || m.status === 'pending') && <Sessions m={m} />}
 
       {active && can('staff.deactivate') && <Dismissal m={m} />}
     </ScrollView>
@@ -218,6 +244,92 @@ function Dismissal({ m }: { m: StaffRow }) {
         </View>
       )}
       <Text className="font-regular text-[11px] text-dim">{t('access.cannotDelete')}</Text>
+    </View>
+  );
+}
+
+function Sessions({ m }: { m: StaffRow }) {
+  const { t, i18n } = useTranslation();
+  const { can } = useCan();
+  const canEnd = can('staff.deactivate');
+  const sessions = useMemberSessions(m.id);
+  const end = useEndSession();
+  const list = sessions.data;
+  const name = m.short ?? m.name ?? m.email ?? '';
+  const others = (list ?? []).filter((s) => !s.current);
+
+  const confirm = (session: StaffSession | null) =>
+    Alert.alert(
+      session ? t('access.endSessionTitle') : t('access.endAllTitle'),
+      session
+        ? t('access.endSessionText', { name, device: session.device })
+        : t('access.endAllText', { name, count: others.length }),
+      [
+        { text: t('access.cancel'), style: 'cancel' },
+        {
+          text: session ? t('access.endSession') : t('access.endAllSessions'),
+          style: 'destructive',
+          onPress: () => end.mutate({ memberId: m.id, sessionId: session ? session.id : null }),
+        },
+      ],
+    );
+
+  return (
+    <View className="gap-2 rounded-14 border border-line bg-panel p-4">
+      <View className="flex-row items-center justify-between gap-3">
+        <Text className={caps}>{t('access.devicesTitle')}</Text>
+        {canEnd && others.length > 1 && (
+          <Pressable accessibilityRole="button" onPress={() => confirm(null)} hitSlop={8}>
+            <Text className="font-medium text-[12px] text-danger">
+              {t('access.endAllSessions')}
+            </Text>
+          </Pressable>
+        )}
+      </View>
+      {list === null ? (
+        <Text className="font-regular text-[12px] text-dim">
+          {m.sessions > 0 ? t('access.devices', { count: m.sessions }) : t('access.noSessions')}
+          {' · '}
+          {t('access.devicesUnavailable')}
+        </Text>
+      ) : list === undefined ? null : list.length === 0 ? (
+        <Text className="font-regular text-[12px] text-dim">{t('access.noDevices')}</Text>
+      ) : (
+        list.map((s) => (
+          <View
+            key={s.id}
+            className="flex-row items-center gap-3 rounded-9 border border-line bg-column px-3 py-[9px]"
+          >
+            <View className="flex-1">
+              <Text numberOfLines={1} className="font-regular text-[12.5px] text-text">
+                {s.device}
+                {s.current && (
+                  <Text className="font-regular text-[11px] text-success">
+                    {'  '}
+                    {t('access.currentSession')}
+                  </Text>
+                )}
+              </Text>
+              <Text className="mt-[2px] font-regular text-[11px] text-dim">
+                {t(`access.platform.${s.platform}`)} ·{' '}
+                {t('access.lastSeen', {
+                  time: formatInBishkek(s.lastSeenAt, 'd MMM, HH:mm', i18n.language),
+                })}
+              </Text>
+            </View>
+            {canEnd && !s.current && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`${t('access.endSession')}: ${s.device}`}
+                onPress={() => confirm(s)}
+                className="h-8 justify-center rounded-8 border border-line px-3"
+              >
+                <Text className="font-medium text-[11.5px] text-sub">{t('access.endSession')}</Text>
+              </Pressable>
+            )}
+          </View>
+        ))
+      )}
     </View>
   );
 }
