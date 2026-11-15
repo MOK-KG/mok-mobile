@@ -10,6 +10,7 @@ import { CheckboxCheckIcon, XIcon } from '@/shared/ui/icons';
 import { Tooltip } from '@/shared/ui/Tooltip';
 import {
   type DueFilter,
+  departmentsOf,
   dueFilters,
   emptyFilters,
   hasFilters,
@@ -51,6 +52,8 @@ export function FilterSheet({ sheetRef, tasks, value, onApply, countWith }: Prop
       tasks.filter((x) => x.project).map((x) => [x.project?.id, x.project as Project]),
     ).values(),
   ];
+
+  const departments = departmentsOf(tasks);
 
   const toggle = <K extends keyof TaskFilters>(key: K, item: string) =>
     setDraft((d) => {
@@ -132,6 +135,17 @@ export function FilterSheet({ sheetRef, tasks, value, onApply, countWith }: Prop
             () => toggle('projects', p.id),
             toneClasses[p.tone].dot,
           ),
+        )}
+        {departments.length > 0 && (
+          <>
+            <View className="my-3 h-px bg-line" />
+            <Text className={section}>{t('tasks.filterDepartment')}</Text>
+            {departments.map((d) =>
+              row(draft.departments.includes(d.name), d.name, d.count, () =>
+                toggle('departments', d.name),
+              ),
+            )}
+          </>
         )}
         <View className="my-3 h-px bg-line" />
         <Text className={section}>{t('tasks.filterDue')}</Text>
