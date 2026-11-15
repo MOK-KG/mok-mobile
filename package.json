@@ -64,7 +64,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test": "jest",
+    "test": "jest --forceExit",
     "lint": "biome check .",
     "format": "biome check --write .",
     "api:sync": "openapi-typescript ${OPENAPI_URL:-http://localhost:8000/openapi.json} -o src/shared/api/schema.d.ts"
@@ -74,9 +74,10 @@
   "jest": {
     "preset": "jest-expo",
     "transformIgnorePatterns": [
-      "node_modules/(?!(.pnpm|(jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg))"
+      "node_modules/(?!(.pnpm|(jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg|@formatjs/.*|nativewind|react-native-css-interop|lucide-react-native|@shopify/.*|@gorhom/.*|standard-navigation))"
     ],
     "moduleNameMapper": {
+      "^lucide-react-native$": "<rootDir>/node_modules/lucide-react-native/dist/cjs/lucide-react-native.js",
       "^@/assets/(.*)$": "<rootDir>/assets/$1",
       "^@/(.*)$": "<rootDir>/src/$1"
     },
@@ -84,6 +85,9 @@
       "/node_modules/",
       "/ios/",
       "/android/"
+    ],
+    "setupFiles": [
+      "<rootDir>/src/test/setup.ts"
     ]
   }
 }

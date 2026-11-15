@@ -127,9 +127,15 @@ Reanimated, expo-secure-store, expo-auth-session, expo-notifications, Biome. М�
 
 ## Тесты
 
-Jest (`jest-expo`) и React Native Testing Library, команда `pnpm test`. Тесты лежат рядом с кодом
-(`*.test.ts`). Здесь тестируется только то, чего нет в web: вход и токен, клиент API, загрузка и
-скачивание файлов. Тесты общих файлов живут в web.
+Jest (`jest-expo`) и React Native Testing Library 14, команда `pnpm test`. Тесты лежат рядом с кодом
+(`*.test.ts(x)`). Здесь тестируется то, чего нет в web: вход и токен, клиент API, файлы, push и экраны.
+Тесты общих файлов живут в web.
+
+- Экран — `renderScreen(<Screen />)` из `src/test/render.tsx` (провайдеры, русский язык)
+- Ответы бэкенда — `fakeApi({ 'GET /chat/chats': [...] }, permissions)` из `src/test/fakeApi.ts`:
+  сессия с правами, формат как у mok-backend, возвращает список запросов
+- В RNTL 14 `render`, `act` и `fireEvent` асинхронные — всегда `await`
+- Моки нативных модулей — `src/test/setup.ts`
 
 ## Перед коммитом
 
