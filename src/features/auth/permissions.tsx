@@ -4,7 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { addJournalEntry } from '@/features/journal/store';
-import { type Permission, type Section, sections } from '@/shared/config/permissions';
+import {
+  laterPhasePermissions,
+  type Permission,
+  type Section,
+  sections,
+} from '@/shared/config/permissions';
 import { useSession } from './useSession';
 
 /**
@@ -13,7 +18,11 @@ import { useSession } from './useSession';
  */
 export function useCan() {
   const session = useSession();
-  const granted = new Set(session.data?.status === 'active' ? session.data.user.permissions : []);
+  const granted = new Set(
+    (session.data?.status === 'active' ? session.data.user.permissions : []).filter(
+      (p) => !laterPhasePermissions.includes(p),
+    ),
+  );
   const isActive = session.data?.status === 'active';
   const can = (permission: Permission | null) =>
     permission === null ? isActive : granted.has(permission);
