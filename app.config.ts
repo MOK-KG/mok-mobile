@@ -18,7 +18,6 @@ const config: ExpoConfig = {
   owner: 'aziret.sherov',
   version: '1.0.0',
   orientation: 'portrait',
-  // TODO(release): иконки и сплэш — заглушки из шаблона Expo, заменить на брендовые НОК КР.
   icon: './assets/images/icon.png',
   // TODO(release): схема deep link. Согласовать с OAuth-провайдером (expo-auth-session):
   // redirect URI вида nokkr://...
@@ -29,13 +28,12 @@ const config: ExpoConfig = {
   userInterfaceStyle: 'automatic',
   ios: {
     bundleIdentifier: APP_ID,
-    icon: './assets/expo.icon',
     config: { usesNonExemptEncryption: false },
   },
   android: {
     package: APP_ID,
     adaptiveIcon: {
-      backgroundColor: '#0A1628',
+      backgroundColor: '#FFFFFF',
       foregroundImage: './assets/images/android-icon-foreground.png',
       backgroundImage: './assets/images/android-icon-background.png',
       monochromeImage: './assets/images/android-icon-monochrome.png',
@@ -52,9 +50,13 @@ const config: ExpoConfig = {
     [
       'expo-splash-screen',
       {
-        backgroundColor: '#0A1628',
+        backgroundColor: '#FFFFFF',
         image: './assets/images/splash-icon.png',
-        imageWidth: 76,
+        imageWidth: 110,
+        dark: {
+          backgroundColor: '#0A1628',
+          image: './assets/images/splash-icon-dark.png',
+        },
       },
     ],
     'expo-secure-store',
