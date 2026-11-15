@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { useTheme } from '@/app/providers/ThemeProvider';
+import { themes } from '@/shared/config/tokens';
 import { Banner } from '@/shared/ui/Banner';
 import { AuthScreen, SheetTitle } from './AuthScreen';
 import { useSession, useSignOut } from './useSession';
@@ -10,6 +13,12 @@ export function PendingScreen() {
   const session = useSession();
   const signOut = useSignOut();
   const email = session.data?.user.email ?? '';
+  const palette = themes[useTheme().theme];
+  const [checking, setChecking] = useState(false);
+  const refresh = () => {
+    setChecking(true);
+    session.refetch().finally(() => setChecking(false));
+  };
 
   return (
     <AuthScreen
@@ -32,11 +41,16 @@ export function PendingScreen() {
           action={
             <Pressable
               accessibilityRole="button"
-              disabled={session.isFetching}
-              onPress={() => session.refetch()}
+              accessibilityState={{ busy: checking, disabled: checking }}
+              disabled={checking}
+              onPress={refresh}
               hitSlop={8}
+              className="flex-row items-center gap-[6px]"
             >
-              <Text className="font-medium text-[11.5px] text-info">{t('auth.refreshStatus')}</Text>
+              {checking && <ActivityIndicator size="small" color={palette.info} />}
+              <Text className="font-medium text-[11.5px] text-info">
+                {checking ? t('auth.checkingStatus') : t('auth.refreshStatus')}
+              </Text>
             </Pressable>
           }
         />
