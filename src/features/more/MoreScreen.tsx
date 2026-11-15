@@ -83,7 +83,7 @@ function Row({
 /** Вкладка «Ещё»: профиль, остальные разделы, уведомления, язык и тема, выход */
 export function MoreScreen() {
   const { t, i18n } = useTranslation();
-  const { theme, setTheme } = useTheme();
+  const { mode, setMode } = useTheme();
   const user = useSession().data?.user;
   const signOut = useSignOut();
   const { canOpen } = useCan();
@@ -168,9 +168,13 @@ export function MoreScreen() {
           <View className="min-h-[52px] flex-row items-center justify-between px-4">
             <Text className="font-medium text-[14px] text-text">{t('settings.theme')}</Text>
             <ThemeSwitch
-              value={theme}
-              onChange={setTheme}
-              labels={{ dark: t('settings.dark'), light: t('settings.light') }}
+              value={mode}
+              onChange={setMode}
+              labels={{
+                dark: t('settings.dark'),
+                light: t('settings.light'),
+                system: t('shell.themeSystem'),
+              }}
             />
           </View>
         </Group>

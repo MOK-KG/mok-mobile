@@ -1,34 +1,37 @@
-import { Moon, Sun } from 'lucide-react-native';
+import { Moon, Sun, SunMoon } from 'lucide-react-native';
 import { Pressable, View } from 'react-native';
-import { brand, type ThemeName, themes } from '@/shared/config/tokens';
+import { type ThemeMode, useTheme } from '@/app/providers/ThemeProvider';
+import { brand, themes } from '@/shared/config/tokens';
 
-type Props = {
-  value: ThemeName;
-  onChange: (theme: ThemeName) => void;
-  labels: { dark: string; light: string };
+type Props<T extends ThemeMode> = {
+  value: T;
+  onChange: (mode: T) => void;
+  labels: { dark: string; light: string; system?: string };
 };
 
-/** Переключатель темы: луна / солнце (сегменты в «таблетке») */
-export function ThemeSwitch({ value, onChange, labels }: Props) {
-  const palette = themes[value];
+export function ThemeSwitch<T extends ThemeMode>({ value, onChange, labels }: Props<T>) {
+  const palette = themes[useTheme().theme];
   const options = [
-    { theme: 'dark' as const, Icon: Moon, label: labels.dark, color: brand['brand-gold'] },
-    { theme: 'light' as const, Icon: Sun, label: labels.light, color: palette.warning },
-  ];
+    { mode: 'dark', Icon: Moon, label: labels.dark, color: brand['brand-gold'] },
+    { mode: 'light', Icon: Sun, label: labels.light, color: palette.warning },
+    ...(labels.system
+      ? [{ mode: 'system', Icon: SunMoon, label: labels.system, color: palette.info }]
+      : []),
+  ] as { mode: T; Icon: typeof Moon; label: string; color: string }[];
   return (
     <View
       accessibilityRole="radiogroup"
       className="h-[30px] flex-row items-center gap-[10px] rounded-full border border-line bg-control px-[2.5px]"
     >
-      {options.map(({ theme, Icon, label, color }) => {
-        const active = theme === value;
+      {options.map(({ mode, Icon, label, color }) => {
+        const active = mode === value;
         return (
           <Pressable
-            key={theme}
+            key={mode}
             accessibilityRole="radio"
             accessibilityLabel={label}
             accessibilityState={{ checked: active }}
-            onPress={() => onChange(theme)}
+            onPress={() => onChange(mode)}
             hitSlop={6}
             className={`size-[23px] items-center justify-center rounded-full ${
               active ? 'bg-control-active' : ''

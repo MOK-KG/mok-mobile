@@ -7,19 +7,23 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { colorScheme, vars } from 'nativewind';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
-import { brand, defaultTheme, type ThemeName, themes, themeVars } from '@/shared/config/tokens';
+import { useColorScheme, View } from 'react-native';
+import { brand, type ThemeName, themes, themeVars } from '@/shared/config/tokens';
 import { storage } from '@/shared/lib/storage';
 
 const THEME_KEY = 'nok.theme';
 
-const readTheme = (): ThemeName => {
+export type ThemeMode = ThemeName | 'system';
+
+const readMode = (): ThemeMode => {
   const saved = storage.get(THEME_KEY);
-  return saved === 'dark' || saved === 'light' ? saved : defaultTheme;
+  return saved === 'dark' || saved === 'light' ? saved : 'system';
 };
 
 type ThemeContextValue = {
+  mode: ThemeMode;
   theme: ThemeName;
+  setMode: (mode: ThemeMode) => void;
   setTheme: (theme: ThemeName) => void;
   toggleTheme: () => void;
 };
@@ -61,21 +65,28 @@ const navigationThemes: Record<ThemeName, NavigationTheme> = {
 };
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<ThemeName>(readTheme);
+  const [mode, setMode] = useState<ThemeMode>(readMode);
+  const system: ThemeName = useColorScheme() === 'light' ? 'light' : 'dark';
+  const theme = mode === 'system' ? system : mode;
 
   useEffect(() => {
     // включает вариант dark: в классах NativeWind
     colorScheme.set(theme);
-    storage.set(THEME_KEY, theme);
   }, [theme]);
+
+  useEffect(() => {
+    storage.set(THEME_KEY, mode);
+  }, [mode]);
 
   const value = useMemo(
     () => ({
+      mode,
       theme,
-      setTheme,
-      toggleTheme: () => setTheme((t) => (t === 'dark' ? 'light' : 'dark')),
+      setMode,
+      setTheme: setMode,
+      toggleTheme: () => setMode(theme === 'dark' ? 'light' : 'dark'),
     }),
-    [theme],
+    [mode, theme],
   );
 
   return (
