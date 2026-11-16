@@ -46,6 +46,7 @@ const kinds: Record<
   reminder: { Icon: BellIcon, stripe: 'bg-info', color: 'sub' },
   done: { Icon: CheckSmallIcon, stripe: 'bg-success', color: 'success' },
   pendingUser: { Icon: AccessIcon, stripe: 'bg-warning', color: 'warning' },
+  followUp: { Icon: MailIcon, stripe: 'bg-info', color: 'info' },
 };
 
 type Filter = 'all' | 'unread' | 'mentions';

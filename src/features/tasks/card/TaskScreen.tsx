@@ -155,7 +155,11 @@ function TaskBody({ task }: { task: TaskDetail }) {
           {task.knowledgeLink && (
             <Pressable
               accessibilityRole="link"
-              onPress={() => router.push('/knowledge')}
+              onPress={() =>
+                router.push(
+                  task.knowledgeArticleId ? `/knowledge/${task.knowledgeArticleId}` : '/knowledge',
+                )
+              }
               className="mt-3 h-[40px] flex-row items-center gap-[9px] rounded-9 border border-line bg-surface px-[13px] active:opacity-80"
             >
               <BookIcon size={17} color={palette.info} />
@@ -167,6 +171,7 @@ function TaskBody({ task }: { task: TaskDetail }) {
           )}
         </View>
 
+        {task.letters.length > 0 && <Letters task={task} />}
         <Properties task={task} />
         <Attachments task={task} />
         <Subtasks task={task} />
@@ -497,6 +502,57 @@ function CommentInput({ taskId }: { taskId: string }) {
   );
 }
 
+function Letters({ task }: { task: TaskDetail }) {
+  const { t, i18n } = useTranslation();
+  const palette = usePalette();
+  const [open, setOpen] = useState<string | null>(task.letters.at(-1)?.id ?? null);
+  return (
+    <View>
+      <Text className={sectionTitle}>{t('taskCard.letters', { count: task.letters.length })}</Text>
+      <View className="mt-2 gap-2">
+        {task.letters.map((letter) => {
+          const expanded = open === letter.id;
+          return (
+            <View key={letter.id} className="rounded-9 border border-line bg-surface">
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ expanded }}
+                onPress={() => setOpen(expanded ? null : letter.id)}
+                className="flex-row items-center gap-[9px] px-[13px] py-[10px]"
+              >
+                <MailMediumIcon size={15} color={palette['warning-text']} />
+                <View className="flex-1">
+                  <Text numberOfLines={1} className="font-medium text-[12.5px] text-text">
+                    {letter.subject}
+                  </Text>
+                  <Text numberOfLines={1} className="font-regular text-[11px] text-dim">
+                    {letter.sender} ·{' '}
+                    {formatInBishkek(letter.receivedAt, 'd MMM, HH:mm', i18n.language)}
+                    {letter.attachments > 0 &&
+                      ` · ${t('taskCard.letterAttachments', { count: letter.attachments })}`}
+                  </Text>
+                </View>
+                <Text
+                  className={`rounded-6 px-[7px] py-[3px] font-medium text-[10px] ${
+                    letter.followUp ? 'bg-info-chip text-info' : 'bg-chip text-chip-text'
+                  }`}
+                >
+                  {letter.followUp ? t('taskCard.letterFollowUp') : t('taskCard.letterOriginal')}
+                </Text>
+              </Pressable>
+              {expanded && (
+                <Text className="border-t border-line px-[13px] py-[10px] font-regular text-[12.5px] leading-5 text-sub">
+                  {letter.body || t('taskCard.letterEmpty')}
+                </Text>
+              )}
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 const historyIcons: Record<HistoryKind, ComponentType<{ size?: number; color: string }>> = {
   escalation: HistoryBoltIcon,
   assignee: HistorySwapIcon,
@@ -505,6 +561,7 @@ const historyIcons: Record<HistoryKind, ComponentType<{ size?: number; color: st
   status: HistorySwapIcon,
   subtask: CheckTinyIcon,
   comment: HistoryMailIcon,
+  letter: HistoryMailIcon,
 };
 
 function historyText(
@@ -518,6 +575,10 @@ function historyText(
     case 'due': {
       const [from, to] = entry.text.split('|');
       return t('taskCard.historyDue', { from: shortDate(from, lang), to: shortDate(to, lang) });
+    }
+    case 'letter': {
+      const [sender, subject] = entry.text.split('|');
+      return t('taskCard.historyLetter', { sender, subject });
     }
     case 'created':
       return entry.text === 'email'

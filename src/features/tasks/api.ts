@@ -60,9 +60,23 @@ export type ApiTaskDetail = ApiTask & {
   attachmentItems: ApiAttachment[];
   history: { id: string; kind: HistoryEntry['kind']; text: string; at: string }[];
   rescheduleLog: { from: IsoDate; to: IsoDate; by: ApiPerson | null }[];
+  letters?: TaskDetail['letters'];
   reminderDays: number | null;
   escalatedAt: string | null;
-  source: { kind: 'email'; mailbox: string; at: string; letterId?: string } | { kind: 'manual' };
+  source:
+    | { kind: 'email'; mailbox: string; at: string; letterId?: string }
+    | {
+        kind: 'document';
+        documentId: string;
+        documentKind: string;
+        number: string | null;
+        title: string;
+        party: string;
+        resolution: string;
+        author: ApiPerson;
+        at: string;
+      }
+    | { kind: 'manual' };
   department: string;
 };
 
@@ -156,15 +170,32 @@ export function toTaskDetail(t: ApiTaskDetail): TaskDetail {
     commentItems: t.commentItems.map((c) => ({ ...c, author: toPerson(c.author) })),
     history: t.history.map(({ id, kind, text, at }) => ({ id, kind, text, at })),
     rescheduleLog: t.rescheduleLog.map((r) => ({ from: r.from, to: r.to, by: toPerson(r.by) })),
+    letters: t.letters ?? [],
     reminderDays: t.reminderDays,
     escalatedAt: t.escalatedAt,
     archived: t.archived ?? false,
-    source:
-      t.source.kind === 'email'
-        ? { kind: 'email', mailbox: t.source.mailbox, at: t.source.at }
-        : { kind: 'manual' },
+    source: toSource(t.source),
     department: t.department,
   };
+}
+
+function toSource(s: ApiTaskDetail['source']): TaskDetail['source'] {
+  if (s.kind === 'email') return { kind: 'email', mailbox: s.mailbox, at: s.at };
+  if (s.kind === 'document') {
+    const { kind, documentId, documentKind, number, title, party, resolution, at } = s;
+    return {
+      kind,
+      documentId,
+      documentKind,
+      number,
+      title,
+      party,
+      resolution,
+      at,
+      author: toPerson(s.author),
+    };
+  }
+  return { kind: 'manual' };
 }
 
 export function toLetter(l: ApiLetter): Letter {
