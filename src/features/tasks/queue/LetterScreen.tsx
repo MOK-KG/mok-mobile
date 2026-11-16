@@ -41,7 +41,7 @@ import {
   usePalette,
 } from '../parts';
 import { toneClasses } from '../ui';
-import { StateChip } from './QueueScreen';
+import { ConfidenceChip, StateChip } from './QueueScreen';
 
 const fields: SuggestionField[] = ['title', 'assignee', 'due', 'project', 'priority'];
 
@@ -212,10 +212,16 @@ function ParsedLetter({ letter, suggestion }: { letter: Letter; suggestion: Sugg
           <Text className="font-semibold text-[10px] uppercase tracking-[1.4px] text-tone-violet">
             {t('mailQueue.suggestion')}
           </Text>
-          <View className="ml-auto">
+          <View className="ml-auto flex-row items-center gap-[6px]">
+            <ConfidenceChip suggestion={suggestion} />
             <StateChip ready={ready} />
           </View>
         </View>
+        {suggestion.lowConfidence && (
+          <Text className="mt-3 rounded-9 border border-danger-line bg-danger-chip px-[13px] py-2 font-regular text-[12px] leading-4 text-danger">
+            {t('mailQueue.lowConfidenceNote')}
+          </Text>
+        )}
 
         {similar.length > 0 && (
           <View className="mt-3">

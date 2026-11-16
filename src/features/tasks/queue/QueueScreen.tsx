@@ -7,7 +7,7 @@ import { relativeShort } from '@/shared/lib/date';
 import { AlertMiniIcon, CheckMiniIcon, MailLetterIcon, PaperclipIcon } from '@/shared/ui/icons';
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
 import { useMailQueue } from '../api';
-import { canCreate, type Letter } from '../mailQueue';
+import { canCreate, isReady, type Letter, type Suggestion } from '../mailQueue';
 import { sectionTitle, usePalette } from '../parts';
 
 /** Очередь из почты: письма, разобранные моделью, и письма для ручного оформления */
@@ -15,8 +15,8 @@ export function QueueScreen() {
   const { t } = useTranslation();
   const queue = useMailQueue();
   const letters = queue.data ?? [];
-  const ready = letters.filter((l) => l.suggestion);
-  const manual = letters.filter((l) => !l.suggestion);
+  const ready = letters.filter(isReady);
+  const manual = letters.filter((l) => !isReady(l));
 
   return (
     <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-canvas">
@@ -57,7 +57,11 @@ export function QueueScreen() {
                 <LetterRow
                   key={l.id}
                   letter={l}
-                  onPress={() => router.push(`/tasks/new?letter=${l.id}`)}
+                  onPress={() =>
+                    router.push(
+                      l.suggestion ? `/tasks/letter/${l.id}` : `/tasks/new?letter=${l.id}`,
+                    )
+                  }
                 />
               ))}
               <Text className="px-4 pt-2 font-regular text-[11px] leading-[15px] text-dim">
@@ -89,6 +93,28 @@ function GroupTitle({
         }`}
       >
         {count}
+      </Text>
+    </View>
+  );
+}
+
+export function ConfidenceChip({ suggestion }: { suggestion: Suggestion }) {
+  const { t } = useTranslation();
+  if (suggestion.confidence == null) return null;
+  return (
+    <View
+      className={`h-[20px] justify-center rounded-[5px] px-[7px] ${
+        suggestion.lowConfidence ? 'bg-danger-chip' : 'bg-chip'
+      }`}
+    >
+      <Text
+        className={`font-medium text-[10.5px] ${
+          suggestion.lowConfidence ? 'text-danger' : 'text-chip-text'
+        }`}
+      >
+        {suggestion.lowConfidence
+          ? t('mailQueue.lowConfidence', { value: suggestion.confidence })
+          : t('mailQueue.confidence', { value: suggestion.confidence })}
       </Text>
     </View>
   );
@@ -146,7 +172,9 @@ function LetterRow({ letter, onPress }: { letter: Letter; onPress: () => void })
           {letter.subject}
         </Text>
         <View className="mt-[7px] flex-row items-center gap-2">
-          {letter.suggestion ? (
+          {letter.suggestion?.lowConfidence ? (
+            <ConfidenceChip suggestion={letter.suggestion} />
+          ) : letter.suggestion ? (
             <StateChip ready={canCreate(letter.suggestion)} />
           ) : (
             <Text className="font-medium text-[11.5px] text-info">
