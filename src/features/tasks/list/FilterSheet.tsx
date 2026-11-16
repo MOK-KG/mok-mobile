@@ -22,6 +22,7 @@ import { toneClasses } from '../ui';
 
 const dueLabel: Record<DueFilter, string> = {
   overdue: 'tasks.dueOverdue',
+  soon: 'tasks.dueSoon',
   week: 'tasks.dueWeek',
   none: 'tasks.dueNone',
 };

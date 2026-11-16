@@ -1,17 +1,17 @@
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
-import { router } from 'expo-router';
-import { useMemo, useRef, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
-import { Can } from '@/features/auth';
+import { Can, useCurrentPersonId } from '@/features/auth';
 import { themes } from '@/shared/config/tokens';
 import { FilterIcon, PlusIcon, SearchIcon, XIcon } from '@/shared/ui/icons';
 import { Tooltip } from '@/shared/ui/Tooltip';
 import { useTasks } from './api';
-import { applyFilters, emptyFilters, hasFilters, type TaskFilters } from './filters';
+import { applyFilters, emptyFilters, hasFilters, isDueFilter, type TaskFilters } from './filters';
 import { matchesQuick, type QuickFilter, quickFilters, sortForList } from './list';
 import { FilterSheet } from './list/FilterSheet';
 import { TaskListItem } from './list/TaskListItem';
@@ -23,19 +23,31 @@ export function TasksScreen() {
   const { theme } = useTheme();
   const palette = themes[theme];
   const tasks = useTasks('department');
+  const me = useCurrentPersonId() ?? undefined;
+  const params = useLocalSearchParams<{ quick?: string; due?: string }>();
   const [quick, setQuick] = useState<QuickFilter>('all');
   const [filters, setFilters] = useState<TaskFilters>(emptyFilters);
+  useEffect(() => {
+    if (!params.quick && !params.due) return;
+    setQuick(quickFilters.find((q) => q === params.quick) ?? 'all');
+    setFilters({ ...emptyFilters, due: (params.due ?? '').split(',').filter(isDueFilter) });
+    router.setParams({ quick: undefined, due: undefined });
+  }, [params.quick, params.due]);
   const [search, setSearch] = useState('');
   const [searching, setSearching] = useState(false);
   const sheet = useRef<BottomSheetModal>(null);
 
   const all = tasks.data ?? [];
   const visibleWith = (f: TaskFilters) =>
-    applyFilters(all, f, search).filter((task) => matchesQuick(task, quick));
+    applyFilters(all, f, search).filter((task) => matchesQuick(task, quick, undefined, me));
   const visible = useMemo(
     () =>
-      sortForList(applyFilters(all, filters, search).filter((task) => matchesQuick(task, quick))),
-    [all, filters, search, quick],
+      sortForList(
+        applyFilters(all, filters, search).filter((task) =>
+          matchesQuick(task, quick, undefined, me),
+        ),
+      ),
+    [all, filters, search, quick, me],
   );
 
   return (

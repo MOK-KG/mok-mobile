@@ -23,8 +23,14 @@ jest.mock(
 
 jest.mock('expo-router', () => ({
   ...jest.requireActual('expo-router'),
-  router: { push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => false },
+  router: {
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+    setParams: jest.fn(),
+    canGoBack: () => false,
+  },
   useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }),
-  useLocalSearchParams: () => ({}),
+  useLocalSearchParams: jest.fn(() => ({})),
   useNavigation: () => ({ addListener: () => () => {}, setOptions: () => {} }),
 }));

@@ -180,20 +180,20 @@ function Stats({ summary, loading }: { summary: DashboardSummary; loading: boole
         Icon={TasksIcon}
         label={t('dashboard.myTasks')}
         value={value(summary.mine.length)}
-        href="/tasks"
+        href="/tasks?quick=mine"
       />
       <Stat
         Icon={ClockIcon}
         label={t('dashboard.overdue')}
         value={value(summary.overdue.length)}
-        href="/tasks"
+        href="/tasks?quick=mine&due=overdue"
         tone="danger"
       />
       <Stat
         Icon={BoltSmallIcon}
         label={t('dashboard.soon')}
         value={value(summary.soon.length)}
-        href="/tasks"
+        href="/tasks?quick=mine&due=soon"
         tone="warning-text"
       />
       {can('tasks.create') && (
@@ -276,7 +276,7 @@ function MyTasks({ summary, loading }: { summary: DashboardSummary; loading: boo
             ? t('dashboard.shownOf', { shown: shown.length, total })
             : String(total)
       }
-      link={{ href: '/tasks', label: t('dashboard.allTasks') }}
+      link={{ href: '/tasks?quick=mine', label: t('dashboard.allTasks') }}
     >
       {loading ? (
         <Empty text={t('dashboard.loading')} />
