@@ -131,6 +131,7 @@ export function NewTaskScreen({ letter }: { letter?: Letter | null }) {
       project: projectList.find((p) => p.id === v.projectId) ?? null,
       priority: v.priority,
       letter: letter ?? undefined,
+      confirmDuplicate: similar.length > 0,
     });
     router.replace(`/tasks/${task.id}`);
   });
