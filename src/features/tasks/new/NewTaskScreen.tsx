@@ -47,6 +47,7 @@ const schema = z
     due: z.string().min(1, 'errorDue'),
     projectId: z.string(),
     priority: z.enum(priorities),
+    reminder: z.string(),
   })
   .superRefine((v, ctx) => {
     if (!v.due) return;
@@ -54,6 +55,8 @@ const schema = z
     const problem = dueProblem(v.due);
     if (problem) ctx.addIssue({ code: 'custom', path: ['due'], message: dueMessage(problem) });
   });
+
+const reminderOptions = [0, 1, 2, 3, 5];
 
 type FormValues = z.infer<typeof schema>;
 
@@ -112,6 +115,7 @@ export function NewTaskScreen({ letter }: { letter?: Letter | null }) {
       due: defaultDue(),
       projectId: '',
       priority: 'normal',
+      reminder: '0',
     },
   });
   const errors = formState.errors;
@@ -132,6 +136,7 @@ export function NewTaskScreen({ letter }: { letter?: Letter | null }) {
       priority: v.priority,
       letter: letter ?? undefined,
       confirmDuplicate: similar.length > 0,
+      reminderDays: Number(v.reminder) || null,
     });
     router.replace(`/tasks/${task.id}`);
   });
@@ -297,6 +302,30 @@ export function NewTaskScreen({ letter }: { letter?: Letter | null }) {
                 />
               )}
             />
+          </Field>
+
+          <Field label={t('newTask.reminder')}>
+            <Controller
+              control={control}
+              name="reminder"
+              render={({ field }) => (
+                <Choices
+                  label={t('newTask.reminder')}
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={reminderOptions.map((days) => ({
+                    value: String(days),
+                    label:
+                      days === 0
+                        ? t('newTask.reminderNone')
+                        : t('newTask.reminderDays', { count: days }),
+                  }))}
+                />
+              )}
+            />
+            <Text className="mt-1 font-regular text-[11.5px] text-dim">
+              {t('newTask.reminderHint')}
+            </Text>
           </Field>
 
           {letter && letter.attachments.length > 0 && (
