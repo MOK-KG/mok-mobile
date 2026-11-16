@@ -1,5 +1,6 @@
-import { fireEvent, screen } from '@testing-library/react-native';
+import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
+import { Alert, type AlertButton } from 'react-native';
 import { fakeApi } from '@/test/fakeApi';
 import { renderScreen } from '@/test/render';
 import { TaskScreen } from './TaskScreen';
@@ -84,4 +85,69 @@ it('opens the linked knowledge base article itself', async () => {
   await renderScreen(<TaskScreen taskId="t-1" />);
   await fireEvent.press(await screen.findByText(/Антидопинговые правила/));
   expect(router.push).toHaveBeenCalledWith('/knowledge/antidoping');
+});
+
+const other = { ...person, id: 7, email: 'ad@olympic.kg', name: 'Айбек Дуйшеев' };
+const columns = [
+  { id: 'c-1', name: 'Очередь', stage: 'queue', wipLimit: null },
+  { id: 'c-2', name: 'В работе', stage: 'in_progress', wipLimit: null },
+  { id: 'c-4', name: 'Готово', stage: 'done', wipLimit: null },
+];
+
+function manage(permissions: string[]) {
+  return fakeApi(
+    {
+      'GET /tasks/items/t-1': task,
+      'GET /tasks/directory': { people: [person, other], projects: [], columns },
+      'POST /tasks/items/t-1/move': task,
+      'PATCH /tasks/items/t-1': task,
+      'POST /tasks/items/t-1/archive': { archived: true },
+    },
+    permissions as never,
+  );
+}
+
+it('changes status and assignee right from the card', async () => {
+  const calls = manage(['tasks.view', 'tasks.edit', 'tasks.assign']);
+  await renderScreen(<TaskScreen taskId="t-1" />);
+  await fireEvent.press(await screen.findByText('Готово'));
+  await waitFor(() =>
+    expect(calls.find((c) => c.path === '/tasks/items/t-1/move')?.body).toMatchObject({
+      columnId: 'c-4',
+    }),
+  );
+  await fireEvent.press(screen.getByText('А. Дуйшеев'));
+  await waitFor(() =>
+    expect(calls.find((c) => c.method === 'PATCH')?.body).toMatchObject({
+      assigneeId: '7',
+      due: null,
+      title: 'Обновить антидопинговый отчёт',
+    }),
+  );
+  expect(screen.queryByText('В архив')).toBeNull();
+});
+
+it('archives only after confirmation', async () => {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  const calls = manage(['tasks.view', 'tasks.archive']);
+  await renderScreen(<TaskScreen taskId="t-1" />);
+  await fireEvent.press(await screen.findByText('В архив'));
+  expect(alert.mock.calls[0][0]).toBe('Перенести задачу в архив?');
+  expect(calls.some((c) => c.path.endsWith('/archive'))).toBe(false);
+  const buttons = (alert.mock.calls[0][2] ?? []) as AlertButton[];
+  buttons.find((b) => b.text === 'В архив')?.onPress?.();
+  await waitFor(() =>
+    expect(calls.find((c) => c.path === '/tasks/items/t-1/archive')?.body).toEqual({
+      archived: true,
+    }),
+  );
+  expect(screen.queryByText('Статус')).toBeNull();
+  alert.mockRestore();
+});
+
+it('shows no management without the rights', async () => {
+  manage(['tasks.view']);
+  await renderScreen(<TaskScreen taskId="t-1" />);
+  expect(await screen.findByText('Переписка · 2 письма')).toBeTruthy();
+  expect(screen.queryByText('Управление')).toBeNull();
 });

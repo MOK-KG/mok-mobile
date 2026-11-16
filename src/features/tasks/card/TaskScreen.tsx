@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { type ComponentType, type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -35,9 +36,29 @@ import {
 } from '@/shared/ui/icons';
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
 import { absenceOf, isAbsentOn } from '../absences';
-import { attachmentUrl, useAddComment, useAddSubtask, useTask, useToggleSubtask } from '../api';
+import {
+  attachmentUrl,
+  type TaskChanges,
+  useAddComment,
+  useAddSubtask,
+  useArchiveTask,
+  useDirectory,
+  useMoveTask,
+  useTask,
+  useToggleSubtask,
+  useUpdateTask,
+} from '../api';
 import { urgencyOf } from '../deadline';
-import { Avatar, Notice, NoticeText, sectionTitle, statusChip, usePalette } from '../parts';
+import {
+  Avatar,
+  Choices,
+  DueField,
+  Notice,
+  NoticeText,
+  sectionTitle,
+  statusChip,
+  usePalette,
+} from '../parts';
 import type { HistoryEntry, HistoryKind, TaskDetail } from '../types';
 import { toneClasses } from '../ui';
 
@@ -172,6 +193,7 @@ function TaskBody({ task }: { task: TaskDetail }) {
         </View>
 
         {task.letters.length > 0 && <Letters task={task} />}
+        <Manage task={task} />
         <Properties task={task} />
         <Attachments task={task} />
         <Subtasks task={task} />
@@ -193,6 +215,101 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 }
 
 const value = 'shrink font-medium text-[12.5px] tracking-[-0.1px] text-text';
+
+const changesOf = (task: TaskDetail, patch: Partial<TaskChanges>): TaskChanges => ({
+  title: task.title,
+  description: task.description,
+  due: task.due,
+  project: task.project,
+  priority: task.priority,
+  assignee: null,
+  ...patch,
+});
+
+function Manage({ task }: { task: TaskDetail }) {
+  const { t } = useTranslation();
+  const { can } = useCan();
+  const directory = useDirectory().data;
+  const move = useMoveTask();
+  const update = useUpdateTask();
+  const archive = useArchiveTask();
+  const [moveError, setMoveError] = useState<string | null>(null);
+  if (!can('tasks.edit') && !can('tasks.archive')) return null;
+
+  const confirmArchive = () =>
+    Alert.alert(
+      t(task.archived ? 'taskCard.unarchiveTitle' : 'taskCard.archiveTitle'),
+      t(task.archived ? 'taskCard.unarchiveText' : 'taskCard.archiveText'),
+      [
+        { text: t('taskCard.cancel'), style: 'cancel' },
+        {
+          text: t(task.archived ? 'taskCard.unarchive' : 'taskCard.archive'),
+          onPress: () => archive.mutate({ id: task.id, archived: !task.archived }),
+        },
+      ],
+    );
+
+  return (
+    <View className="gap-[10px]">
+      <Text className={sectionTitle}>{t('taskCard.manage')}</Text>
+      {can('tasks.edit') && !task.archived && (
+        <>
+          <View className="gap-[6px]">
+            <Text className="font-regular text-[12px] text-faint">{t('taskCard.status')}</Text>
+            <Choices
+              label={t('taskCard.status')}
+              value={task.columnId}
+              options={(directory?.columns ?? []).map((c) => ({ value: c.id, label: c.name }))}
+              onChange={(columnId) => {
+                setMoveError(null);
+                move.mutate(
+                  { id: task.id, columnId },
+                  { onError: () => setMoveError(t('errors.code.wip_limit')) },
+                );
+              }}
+            />
+            {moveError && (
+              <Text className="font-regular text-[11.5px] text-danger">{moveError}</Text>
+            )}
+          </View>
+          <View className="gap-[6px]">
+            <Text className="font-regular text-[12px] text-faint">{t('taskCard.due')}</Text>
+            <DueField
+              label={t('taskCard.due')}
+              value={task.due}
+              onChange={(due) => update.mutate({ id: task.id, ...changesOf(task, { due }) })}
+            />
+          </View>
+          {can('tasks.assign') && (
+            <View className="gap-[6px]">
+              <Text className="font-regular text-[12px] text-faint">{t('taskCard.assignee')}</Text>
+              <Choices
+                label={t('taskCard.assignee')}
+                value={task.assignee?.id ?? null}
+                options={(directory?.people ?? []).map((p) => ({ value: p.id, label: p.short }))}
+                onChange={(id) => {
+                  const assignee = directory?.people.find((p) => p.id === id) ?? null;
+                  if (assignee) update.mutate({ id: task.id, ...changesOf(task, { assignee }) });
+                }}
+              />
+            </View>
+          )}
+        </>
+      )}
+      {can('tasks.archive') && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={confirmArchive}
+          className="h-10 items-center justify-center rounded-9 border border-line"
+        >
+          <Text className="font-medium text-[13px] text-sub">
+            {t(task.archived ? 'taskCard.unarchive' : 'taskCard.archive')}
+          </Text>
+        </Pressable>
+      )}
+    </View>
+  );
+}
 
 function Properties({ task }: { task: TaskDetail }) {
   const { t, i18n } = useTranslation();
