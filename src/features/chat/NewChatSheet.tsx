@@ -1,4 +1,5 @@
 import { BottomSheetBackdrop, BottomSheetFlatList, BottomSheetModal } from '@gorhom/bottom-sheet';
+import { router } from 'expo-router';
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
@@ -8,7 +9,7 @@ import { useCurrentAbsences } from '@/features/absences/api';
 import { useCurrentPersonId } from '@/features/auth';
 import { Avatar } from '@/features/tasks/parts';
 import { themes } from '@/shared/config/tokens';
-import { XIcon } from '@/shared/ui/icons';
+import { GroupIcon, XIcon } from '@/shared/ui/icons';
 import { Tooltip } from '@/shared/ui/Tooltip';
 import { useChatMembers } from './api';
 import { peerSubtitle } from './parts';
@@ -67,6 +68,19 @@ export function NewChatSheet({
           </Pressable>
         </Tooltip>
       </View>
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => {
+          sheetRef.current?.dismiss();
+          router.push('/chat/group/new');
+        }}
+        className="mx-[11px] mb-1 h-[52px] flex-row items-center gap-3 rounded-9 px-2 active:bg-control-active"
+      >
+        <View className="size-[34px] items-center justify-center rounded-full bg-info-chip">
+          <GroupIcon size={17} color={palette.info} />
+        </View>
+        <Text className="flex-1 font-medium text-[14px] text-info">{t('chat.newGroup')}</Text>
+      </Pressable>
       <BottomSheetFlatList
         data={people}
         keyExtractor={(m: ChatMember) => m.id}

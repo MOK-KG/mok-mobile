@@ -161,3 +161,26 @@ it('offers attachments only with the rights to them', async () => {
   expect(screen.queryByLabelText('Прикрепить статью')).toBeNull();
   expect(screen.queryByLabelText('Прикрепить задачу')).toBeNull();
 });
+
+it('shows a task card without its title to those who cannot see tasks', async () => {
+  fakeApi(
+    {
+      'GET /chat/chats': [chat],
+      'GET /chat/members': members,
+      'GET /chat/chats/5/messages': [
+        {
+          ...message,
+          id: 104,
+          kind: 'task',
+          text: '',
+          task: { id: null, title: null, status: null, assignee: null, due: null },
+        },
+      ],
+      'POST /chat/chats/5/read': null,
+      'GET /chat/unread': { total: 0 },
+    },
+    ['chat.use'],
+  );
+  await renderScreen(<ConversationScreen chatId="5" />);
+  expect(await screen.findByText('Задача недоступна — нет доступа к задачам')).toBeTruthy();
+});

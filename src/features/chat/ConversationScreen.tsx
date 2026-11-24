@@ -172,6 +172,9 @@ function Header({ chat }: { chat: ChatSummary | null }) {
   const menu = () => {
     if (!chat) return;
     Alert.alert(chat.fullTitle, undefined, [
+      ...(chat.kind === 'group'
+        ? [{ text: t('chat.groupInfo'), onPress: () => router.push(`/chat/group/${chat.id}`) }]
+        : []),
       {
         text: chat.muted ? t('chat.unmute') : t('chat.mute'),
         onPress: () => setMuted.mutate({ chatId: chat.id, muted: !chat.muted }),
@@ -293,7 +296,9 @@ function MessageRow({
             <Text className="font-regular text-[11px] text-dim">{time}</Text>
           </View>
         )}
-        {m.kind === 'task' && m.task ? (
+        {m.kind === 'task' && m.taskHidden ? (
+          <HiddenTaskCard />
+        ) : m.kind === 'task' && m.task ? (
           <TaskCard task={m.task} />
         ) : m.kind === 'article' && m.article ? (
           <ArticleCard article={m.article} />
@@ -381,6 +386,23 @@ function TaskCard({ task }: { task: NonNullable<ChatMessage['task']> }) {
         </Text>
       </View>
     </Pressable>
+  );
+}
+
+function HiddenTaskCard() {
+  const { t } = useTranslation();
+  const palette = usePalette();
+  return (
+    <View className="relative mt-1 overflow-hidden rounded-11 border border-line bg-surface py-[10px] pl-[14px] pr-3">
+      <View className="absolute bottom-0 left-0 top-0 w-[2.5px] bg-info" />
+      <View className="flex-row items-center gap-[6px]">
+        <TasksMiniIcon size={12} color={palette['info-text']} />
+        <Text className="font-semibold text-[10px] uppercase tracking-[1.2px] text-info-text">
+          {t('chat.taskFromBoard')}
+        </Text>
+      </View>
+      <Text className="mt-[6px] font-medium text-[13.5px] text-dim">{t('chat.taskHidden')}</Text>
+    </View>
   );
 }
 

@@ -67,7 +67,7 @@ export function previewOf(
   }
   const body =
     message.kind === 'task'
-      ? `${t('chat.taskFromBoard')}: ${message.task?.title ?? ''}`
+      ? `${t('chat.taskFromBoard')}: ${message.task?.title ?? t('chat.taskHidden')}`
       : message.kind === 'article'
         ? `${t('chat.articleFromKb')}: ${message.article?.title ?? t('chat.articleHidden')}`
         : message.text || message.file?.name || '';
