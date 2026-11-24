@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react-native';
+import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { addDays, nextWorkingDay, todayInBishkek } from '@/shared/lib/workDays';
 import { fakeApi, me } from '@/test/fakeApi';
@@ -80,4 +80,37 @@ it('shows only my tasks under the «Мои» quick filter', async () => {
   expect(await screen.findByText('Моя задача на потом')).toBeTruthy();
   expect(screen.getByText('Мой просроченный отчёт')).toBeTruthy();
   expect(screen.queryByText('Чужой просроченный договор')).toBeNull();
+});
+
+it('switches to the board and moves a task to another column on long press', async () => {
+  const board = {
+    columns: [
+      { id: 'c-1', name: 'Очередь', stage: 'queue', position: 0, wipLimit: null },
+      { id: 'c-2', name: 'В работе', stage: 'in_progress', position: 1, wipLimit: 2 },
+    ],
+    tasks: [
+      task('0001', 'Мой просроченный отчёт', mine, overdue),
+      { ...task('0002', 'Задача в очереди', other, later), columnId: 'c-1', status: 'queue' },
+    ],
+    counts: { mine: 1, department: 2, createdByMe: 0, completed: 0 },
+  };
+  const calls = fakeApi(
+    {
+      'GET /tasks/board': board,
+      'POST /tasks/items/0002/move': { ...board.tasks[1], columnId: 'c-2' },
+    },
+    ['tasks.view', 'tasks.edit'],
+  );
+  await renderScreen(<TasksScreen />);
+  await screen.findByText('Задача в очереди');
+  await fireEvent.press(screen.getByLabelText('Доска'));
+  expect(await screen.findByText('1 / 2')).toBeTruthy();
+  await fireEvent(screen.getByLabelText('Задача в очереди'), 'longPress');
+  expect(screen.getByText('Переместить в…')).toBeTruthy();
+  await fireEvent.press(screen.getAllByText('В работе').at(-1) as never);
+  await waitFor(() =>
+    expect(calls.find((c) => c.path === '/tasks/items/0002/move')?.body).toMatchObject({
+      columnId: 'c-2',
+    }),
+  );
 });

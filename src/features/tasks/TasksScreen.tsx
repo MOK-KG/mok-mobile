@@ -8,21 +8,24 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { Can, useCurrentPersonId } from '@/features/auth';
 import { themes } from '@/shared/config/tokens';
-import { FilterIcon, PlusIcon, SearchIcon, XIcon } from '@/shared/ui/icons';
+import { FilterIcon, PlusIcon, SearchIcon, TasksIcon, XIcon } from '@/shared/ui/icons';
 import { Tooltip } from '@/shared/ui/Tooltip';
-import { useTasks } from './api';
+import { useBoard } from './api';
 import { applyFilters, emptyFilters, hasFilters, isDueFilter, type TaskFilters } from './filters';
 import { matchesQuick, type QuickFilter, quickFilters, sortForList } from './list';
+import { BoardView } from './list/BoardView';
 import { FilterSheet } from './list/FilterSheet';
 import { TaskListItem } from './list/TaskListItem';
 import { QueueBanner } from './queue/QueueBanner';
 
-/** Раздел «Задачи» на мобильном: список вместо доски (макет Figma: «Мобильный список») */
+/** Раздел «Задачи» на мобильном: список (макет Figma: «Мобильный список») или доска по колонкам */
 export function TasksScreen() {
   const { t } = useTranslation();
   const { theme } = useTheme();
   const palette = themes[theme];
-  const tasks = useTasks('department');
+  const board = useBoard('department');
+  const tasks = { ...board, data: board.data?.tasks };
+  const [view, setView] = useState<'list' | 'board'>('list');
   const me = useCurrentPersonId() ?? undefined;
   const params = useLocalSearchParams<{ quick?: string; due?: string }>();
   const [quick, setQuick] = useState<QuickFilter>('all');
@@ -87,6 +90,20 @@ export function TasksScreen() {
             ) : (
               <SearchIcon size={16} color={palette.sub} />
             )}
+          </Pressable>
+        </Tooltip>
+        <Tooltip content={t(`tasks.view.${view === 'list' ? 'board' : 'list'}`)}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t(`tasks.view.${view === 'list' ? 'board' : 'list'}`)}
+            accessibilityState={{ selected: view === 'board' }}
+            onPress={() => setView((v) => (v === 'list' ? 'board' : 'list'))}
+            hitSlop={8}
+            className={`size-7 items-center justify-center rounded-[7px] ${
+              view === 'board' ? 'bg-control-active' : ''
+            }`}
+          >
+            <TasksIcon size={16} color={view === 'board' ? palette.text : palette.sub} />
           </Pressable>
         </Tooltip>
         <Can permission="tasks.create">
@@ -155,21 +172,25 @@ export function TasksScreen() {
         <QueueBanner />
       </Can>
 
-      <FlashList
-        data={visible}
-        keyExtractor={(task) => task.id}
-        renderItem={({ item }) => (
-          <TaskListItem task={item} onPress={() => router.push(`/tasks/${item.id}`)} />
-        )}
-        ItemSeparatorComponent={() => <View className="mx-4 h-px bg-line" />}
-        ListEmptyComponent={
-          tasks.isPending ? null : (
-            <Text className="py-10 text-center font-regular text-[13px] text-dim">
-              {t('tasks.noResults')}
-            </Text>
-          )
-        }
-      />
+      {view === 'board' ? (
+        <BoardView columns={board.data?.columns ?? []} tasks={visible} />
+      ) : (
+        <FlashList
+          data={visible}
+          keyExtractor={(task) => task.id}
+          renderItem={({ item }) => (
+            <TaskListItem task={item} onPress={() => router.push(`/tasks/${item.id}`)} />
+          )}
+          ItemSeparatorComponent={() => <View className="mx-4 h-px bg-line" />}
+          ListEmptyComponent={
+            tasks.isPending ? null : (
+              <Text className="py-10 text-center font-regular text-[13px] text-dim">
+                {t('tasks.noResults')}
+              </Text>
+            )
+          }
+        />
+      )}
 
       <FilterSheet
         sheetRef={sheet}

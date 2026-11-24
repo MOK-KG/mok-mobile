@@ -30,7 +30,15 @@ function Chip({ className, children }: { className: string; children: ReactNode 
 }
 
 /** Строка задачи в мобильном списке (макет Figma: task/*) */
-export function TaskListItem({ task, onPress }: { task: Task; onPress: () => void }) {
+export function TaskListItem({
+  task,
+  onPress,
+  onLongPress,
+}: {
+  task: Task;
+  onPress: () => void;
+  onLongPress?: () => void;
+}) {
   const { t, i18n } = useTranslation();
   const { theme } = useTheme();
   const palette = themes[theme];
@@ -74,6 +82,7 @@ export function TaskListItem({ task, onPress }: { task: Task; onPress: () => voi
       accessibilityRole="button"
       accessibilityLabel={task.title}
       onPress={onPress}
+      onLongPress={onLongPress}
       className="relative bg-panel px-4 pb-[14px] pt-[10px] active:bg-row-highlight"
     >
       {stripe && <View className={`absolute bottom-0 left-0 top-0 w-[3px] ${stripe}`} />}
