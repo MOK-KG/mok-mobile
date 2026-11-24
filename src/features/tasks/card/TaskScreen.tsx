@@ -1,3 +1,4 @@
+import * as DocumentPicker from 'expo-document-picker';
 import { router } from 'expo-router';
 import { type ComponentType, type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCan } from '@/features/auth';
 import { openProtectedFile } from '@/shared/api/download';
+import { type PickedFile, toUpload } from '@/shared/api/upload';
 import { formatInBishkek, formatIsoDate } from '@/shared/lib/date';
 import { toast } from '@/shared/lib/toast';
 import { addDays, todayInBishkek } from '@/shared/lib/workDays';
@@ -33,11 +35,13 @@ import {
   PlaneMediumIcon,
   PlusSmallIcon,
   SendIcon,
+  XIcon,
 } from '@/shared/ui/icons';
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
 import { absenceOf, isAbsentOn } from '../absences';
 import {
   attachmentUrl,
+  commentFilesMax,
   type TaskChanges,
   useAddComment,
   useAddSubtask,
@@ -530,6 +534,7 @@ const VISIBLE_COMMENTS = 2;
 
 function Discussion({ task }: { task: TaskDetail }) {
   const { t, i18n } = useTranslation();
+  const palette = usePalette();
   const [all, setAll] = useState(false);
   const hidden = all ? 0 : Math.max(0, task.commentItems.length - VISIBLE_COMMENTS);
   const visible = task.commentItems.slice(hidden);
@@ -566,9 +571,35 @@ function Discussion({ task }: { task: TaskDetail }) {
                   {formatInBishkek(c.at, 'd MMM, HH:mm', i18n.language)}
                 </Text>
               </View>
-              <Text className="mt-[2px] font-regular text-[13px] leading-[19px] text-sub">
-                {c.text}
-              </Text>
+              {c.text ? (
+                <Text className="mt-[2px] font-regular text-[13px] leading-[19px] text-sub">
+                  {c.text}
+                </Text>
+              ) : null}
+              {c.attachments.length > 0 && (
+                <View className="mt-[6px] gap-[6px]">
+                  {c.attachments.map((a) => (
+                    <Pressable
+                      key={a.id}
+                      accessibilityRole="link"
+                      onPress={() =>
+                        openProtectedFile(attachmentUrl(a.id), a.filename).catch(() =>
+                          toast.error(t('errors.network')),
+                        )
+                      }
+                      className="h-8 flex-row items-center gap-2 self-start rounded-8 border border-line bg-surface px-[10px] active:bg-control-active"
+                    >
+                      <AttachLargeIcon size={14} color={palette.faint} />
+                      <Text
+                        numberOfLines={1}
+                        className="max-w-[220px] font-regular text-[12px] text-sub"
+                      >
+                        {a.filename}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
             </View>
           </View>
         ))}
@@ -583,15 +614,51 @@ function CommentInput({ taskId }: { taskId: string }) {
   const palette = usePalette();
   const add = useAddComment();
   const [text, setText] = useState('');
+  const [files, setFiles] = useState<PickedFile[]>([]);
+  const ready = text.trim().length > 0 || files.length > 0;
+  const full = files.length >= commentFilesMax;
+
+  const pick = async () => {
+    const picked = await DocumentPicker.getDocumentAsync({ multiple: true });
+    if (picked.canceled) return;
+    setFiles((prev) => [...prev, ...picked.assets].slice(0, commentFilesMax));
+  };
 
   const submit = () => {
-    if (!text.trim()) return;
-    add.mutate({ taskId, text: text.trim() });
+    if (!ready) return;
+    add.mutate({ taskId, text: text.trim(), files: files.map(toUpload) });
     setText('');
+    setFiles([]);
   };
 
   return (
     <View className="border-t border-line bg-panel px-4 py-[10px]">
+      {files.length > 0 && (
+        <View
+          accessibilityLabel={t('taskCard.selectedFiles')}
+          className="mb-2 flex-row flex-wrap gap-[6px]"
+        >
+          {files.map((f) => (
+            <View
+              key={f.uri}
+              className="h-8 flex-row items-center gap-1 rounded-8 border border-line bg-surface pl-[10px] pr-1"
+            >
+              <Text numberOfLines={1} className="max-w-[180px] font-regular text-[12px] text-sub">
+                {f.name}
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('taskCard.removeFile', { name: f.name })}
+                onPress={() => setFiles((prev) => prev.filter((x) => x !== f))}
+                hitSlop={6}
+                className="size-6 items-center justify-center"
+              >
+                <XIcon size={12} color={palette.faint} />
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      )}
       <View className="min-h-10 flex-row items-center gap-1 rounded-9 border border-line bg-surface pl-[13px] pr-[6px]">
         <TextInput
           value={text}
@@ -605,12 +672,23 @@ function CommentInput({ taskId }: { taskId: string }) {
         />
         <Pressable
           accessibilityRole="button"
+          accessibilityLabel={t('taskCard.attach')}
+          accessibilityState={{ disabled: full }}
+          disabled={full}
+          onPress={pick}
+          hitSlop={6}
+          className={`size-8 items-center justify-center rounded-6 ${full ? 'opacity-40' : ''}`}
+        >
+          <AttachLargeIcon size={17} color={palette.faint} />
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
           accessibilityLabel={t('taskCard.send')}
-          accessibilityState={{ disabled: !text.trim() }}
-          disabled={!text.trim()}
+          accessibilityState={{ disabled: !ready }}
+          disabled={!ready}
           onPress={submit}
           hitSlop={6}
-          className={`size-8 items-center justify-center rounded-6 ${text.trim() ? '' : 'opacity-40'}`}
+          className={`size-8 items-center justify-center rounded-6 ${ready ? '' : 'opacity-40'}`}
         >
           <SendIcon size={17} color={palette.info} />
         </Pressable>

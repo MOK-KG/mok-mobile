@@ -1,4 +1,5 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react-native';
+import * as DocumentPicker from 'expo-document-picker';
 import { router } from 'expo-router';
 import { Alert, type AlertButton } from 'react-native';
 import { fakeApi } from '@/test/fakeApi';
@@ -85,6 +86,52 @@ it('opens the linked knowledge base article itself', async () => {
   await renderScreen(<TaskScreen taskId="t-1" />);
   await fireEvent.press(await screen.findByText(/Антидопинговые правила/));
   expect(router.push).toHaveBeenCalledWith('/knowledge/antidoping');
+});
+
+it('shows files under a comment', async () => {
+  fakeApi(
+    {
+      'GET /tasks/items/t-1': {
+        ...task,
+        comments: 1,
+        commentItems: [
+          {
+            id: 'c-1',
+            author: person,
+            at: '2026-11-14T12:00:00+06:00',
+            text: '',
+            attachments: [{ id: 'a-1', filename: 'smeta.xlsx', size: 4 }],
+          },
+        ],
+      },
+    },
+    ['tasks.view'],
+  );
+  await renderScreen(<TaskScreen taskId="t-1" />);
+  expect(await screen.findByText('smeta.xlsx')).toBeTruthy();
+});
+
+it('sends a comment with an attached file', async () => {
+  jest.spyOn(DocumentPicker, 'getDocumentAsync').mockResolvedValue({
+    canceled: false,
+    assets: [
+      { uri: 'file:///smeta.xlsx', name: 'smeta.xlsx', mimeType: 'application/vnd.ms-excel' },
+    ],
+  } as never);
+  const calls = fakeApi(
+    { 'GET /tasks/items/t-1': task, 'POST /tasks/items/t-1/comments': { id: 'c-2' } },
+    ['tasks.view'],
+  );
+  await renderScreen(<TaskScreen taskId="t-1" />);
+  await fireEvent.press(await screen.findByLabelText('Прикрепить файл'));
+  expect(await screen.findByText('smeta.xlsx')).toBeTruthy();
+  await fireEvent.press(screen.getByLabelText('Отправить'));
+  await waitFor(() => {
+    const body = calls.find((c) => c.path === '/tasks/items/t-1/comments')?.body;
+    expect(body).toBeInstanceOf(FormData);
+    expect((body as FormData).getAll('files')).toHaveLength(1);
+  });
+  expect(screen.queryByLabelText('Убрать smeta.xlsx')).toBeNull();
 });
 
 const other = { ...person, id: 7, email: 'ad@olympic.kg', name: 'Айбек Дуйшеев' };
