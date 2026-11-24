@@ -1,6 +1,7 @@
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import * as DocumentPicker from 'expo-document-picker';
 import { router } from 'expo-router';
-import { type ComponentType, type ReactNode, useState } from 'react';
+import { type ComponentType, type ReactNode, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Alert,
@@ -14,6 +15,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCan } from '@/features/auth';
+import { useSendMessage } from '@/features/chat/api';
+import { ChatPickerSheet } from '@/features/chat/ChatPickerSheet';
 import { openProtectedFile } from '@/shared/api/download';
 import { type PickedFile, toUpload } from '@/shared/api/upload';
 import { formatInBishkek, formatIsoDate } from '@/shared/lib/date';
@@ -197,6 +200,7 @@ function TaskBody({ task }: { task: TaskDetail }) {
         </View>
 
         {task.letters.length > 0 && <Letters task={task} />}
+        <Discuss task={task} />
         <Manage task={task} />
         <Properties task={task} />
         <Attachments task={task} />
@@ -229,6 +233,47 @@ const changesOf = (task: TaskDetail, patch: Partial<TaskChanges>): TaskChanges =
   assignee: null,
   ...patch,
 });
+
+function Discuss({ task }: { task: TaskDetail }) {
+  const { t } = useTranslation();
+  const { can } = useCan();
+  const send = useSendMessage();
+  const sheet = useRef<BottomSheetModal>(null);
+  if (!can('chat.use') || task.archived) return null;
+
+  const discussIn = (chatId: string) =>
+    send.mutate(
+      {
+        chatId,
+        message: {
+          kind: 'task',
+          text: '',
+          task: {
+            id: task.id,
+            title: task.title,
+            status: task.status,
+            assignee: task.assignee?.short ?? '—',
+            due: task.due,
+          },
+        },
+      },
+      { onSuccess: () => router.push(`/chat/${chatId}`) },
+    );
+
+  return (
+    <>
+      <Pressable
+        accessibilityRole="button"
+        disabled={send.isPending}
+        onPress={() => sheet.current?.present()}
+        className={`h-10 items-center justify-center rounded-9 border border-line ${send.isPending ? 'opacity-50' : ''}`}
+      >
+        <Text className="font-medium text-[13px] text-sub">{t('taskCard.discuss')}</Text>
+      </Pressable>
+      <ChatPickerSheet sheetRef={sheet} onPick={(chat) => discussIn(chat.id)} />
+    </>
+  );
+}
 
 function Manage({ task }: { task: TaskDetail }) {
   const { t } = useTranslation();

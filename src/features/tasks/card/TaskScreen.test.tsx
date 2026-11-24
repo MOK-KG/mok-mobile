@@ -134,6 +134,51 @@ it('sends a comment with an attached file', async () => {
   expect(screen.queryByLabelText('Убрать smeta.xlsx')).toBeNull();
 });
 
+it('posts the task to the chosen chat and opens it', async () => {
+  const channel = {
+    id: 5,
+    kind: 'channel',
+    title: 'Юридический',
+    fullTitle: 'Юридический отдел',
+    memberIds: [7, 9],
+    peerId: null,
+    readAt: '2026-11-14T09:00:00+06:00',
+    muted: false,
+    last: null,
+    unread: 0,
+  };
+  const calls = fakeApi(
+    {
+      'GET /tasks/items/t-1': task,
+      'GET /chat/chats': [channel],
+      'POST /chat/chats/5/messages': (body: unknown) => ({
+        id: 77,
+        chatId: 5,
+        author: 9,
+        at: '2026-11-14T12:00:00+06:00',
+        threadId: null,
+        ...(body as object),
+      }),
+    },
+    ['tasks.view', 'chat.use'],
+  );
+  await renderScreen(<TaskScreen taskId="t-1" />);
+  await fireEvent.press(await screen.findByText('Обсудить в чате'));
+  await fireEvent.press(await screen.findByText('Юридический'));
+  await waitFor(() => expect(router.push).toHaveBeenCalledWith('/chat/5'));
+  expect(calls.find((c) => c.path === '/chat/chats/5/messages')?.body).toMatchObject({
+    kind: 'task',
+    taskId: 't-1',
+  });
+});
+
+it('hides the chat button without chat access', async () => {
+  fakeApi({ 'GET /tasks/items/t-1': task }, ['tasks.view']);
+  await renderScreen(<TaskScreen taskId="t-1" />);
+  await screen.findByText('Переписка · 2 письма');
+  expect(screen.queryByText('Обсудить в чате')).toBeNull();
+});
+
 const other = { ...person, id: 7, email: 'ad@olympic.kg', name: 'Айбек Дуйшеев' };
 const columns = [
   { id: 'c-1', name: 'Очередь', stage: 'queue', wipLimit: null },
