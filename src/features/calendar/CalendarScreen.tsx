@@ -156,6 +156,13 @@ export function CalendarScreen() {
             </Text>
           </View>
         )}
+        {norm.preliminary && (
+          <View className="rounded-9 border border-warning-line bg-warning-soft px-3 py-2">
+            <Text className="font-regular text-[11.5px] leading-4 text-warning-text">
+              {t('calendar.preliminary', { year: month.slice(0, 4) })}
+            </Text>
+          </View>
+        )}
 
         <View className="overflow-hidden rounded-14 border border-line bg-panel">
           <View className="flex-row border-b border-line">
