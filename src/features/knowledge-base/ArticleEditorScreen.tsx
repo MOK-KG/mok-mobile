@@ -17,7 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { z } from 'zod';
 import { useTheme } from '@/app/providers/ThemeProvider';
-import { ForbiddenScreen } from '@/features/auth';
+import { ForbiddenScreen, useCan } from '@/features/auth';
 import { useTasks } from '@/features/tasks/api';
 import { statusChip } from '@/features/tasks/parts';
 import { ApiError } from '@/shared/api/errors';
@@ -285,6 +285,7 @@ function EditorForm({
   const summary = useWatch({ control, name: 'summary' });
   const attachments = useWatch({ control, name: 'attachments' });
   const relatedTasks = useWatch({ control, name: 'relatedTasks' });
+  const canLinkTasks = useCan().can('tasks.edit');
   const relatedDocuments = useWatch({ control, name: 'relatedDocuments' });
   const summaryLength = summary.trim().length;
 
@@ -477,10 +478,12 @@ function EditorForm({
           )}
 
           <View className="h-px bg-line" />
-          <RelatedTasksField
-            value={relatedTasks}
-            onChange={(next) => setValue('relatedTasks', next, { shouldDirty: true })}
-          />
+          {canLinkTasks && (
+            <RelatedTasksField
+              value={relatedTasks}
+              onChange={(next) => setValue('relatedTasks', next, { shouldDirty: true })}
+            />
+          )}
           <RelatedDocumentsField
             value={relatedDocuments}
             onChange={(next) => setValue('relatedDocuments', next, { shouldDirty: true })}
