@@ -44,6 +44,14 @@ export function RolesScreen() {
           accessibilityLabel={t('access.search')}
           className="h-10 rounded-9 border border-line bg-panel px-3 font-regular text-[13.5px] text-text"
         />
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/access/roles')}
+          className="mt-2 h-10 flex-row items-center justify-between rounded-9 border border-line bg-panel px-3 active:bg-control-active"
+        >
+          <Text className="font-medium text-[13px] text-text">{t('access.matrix')}</Text>
+          <Text className="font-regular text-[13px] text-dim">›</Text>
+        </Pressable>
       </View>
       <ScrollView
         horizontal
