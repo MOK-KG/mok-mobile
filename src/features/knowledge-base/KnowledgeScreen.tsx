@@ -141,7 +141,6 @@ export function KnowledgeScreen() {
                 >
                   <LockIcon size={14} color={palette.dim} />
                   <Text className="font-regular text-[12px] text-dim">{s.name}</Text>
-                  <Text className="font-regular text-[10.5px] text-dim">{s.count}</Text>
                 </Pressable>
               </Tooltip>
             );
@@ -159,7 +158,7 @@ export function KnowledgeScreen() {
               >
                 {s.name}
               </Text>
-              <Text className="font-regular text-[10.5px] text-dim">{s.count}</Text>
+              <Text className="font-regular text-[10.5px] text-dim">{s.count ?? 0}</Text>
             </Pressable>
           );
         })}
@@ -197,7 +196,9 @@ export function KnowledgeScreen() {
             </Text>
             <Text className="font-regular text-[11.5px] text-faint">
               {[
-                t('knowledge.articles', { count: current ? current.count : articles.length }),
+                t('knowledge.articles', {
+                  count: current ? (current.count ?? 0) : articles.length,
+                }),
                 showFound && t('knowledge.foundInSection', { count: foundHere }),
               ]
                 .filter(Boolean)
