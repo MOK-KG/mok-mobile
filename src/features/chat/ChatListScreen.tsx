@@ -118,7 +118,7 @@ function ChatRow({ chat, onPress }: { chat: ChatSummary; onPress: () => void }) 
   const absences = useCurrentAbsences().data;
   const peer = chat.peerId ? members[chat.peerId] : undefined;
   const subtitle =
-    chat.kind === 'channel'
+    chat.kind !== 'direct'
       ? t('chat.members', { count: chat.memberIds.length })
       : peerSubtitle(peer, t, i18n.language, false, absences);
   const preview = previewOf(chat, chat.last, t, members, me);

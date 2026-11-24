@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCurrentAbsences } from '@/features/absences/api';
+import { useCan } from '@/features/auth';
 import { Avatar, Notice, NoticeText, statusChip, usePalette } from '@/features/tasks/parts';
 import { useOpenTaskByTitle } from '@/features/tasks/useOpenTaskByTitle';
 import { openProtectedFile } from '@/shared/api/download';
@@ -24,6 +25,7 @@ import { toast } from '@/shared/lib/toast';
 import {
   AttachLargeIcon,
   BoltMediumIcon,
+  BookIcon,
   ChevronLeftIcon,
   MoreIcon,
   PaperclipIcon,
@@ -33,6 +35,7 @@ import {
   TasksMiniIcon,
 } from '@/shared/ui/icons';
 import { Tooltip } from '@/shared/ui/Tooltip';
+import { ArticlePickerSheet } from './ArticlePickerSheet';
 import {
   chatFileUrl,
   threadsOf,
@@ -162,7 +165,7 @@ function Header({ chat }: { chat: ChatSummary | null }) {
   const peer = chat?.peerId ? members[chat.peerId] : undefined;
   const subtitle = !chat
     ? ''
-    : chat.kind === 'channel'
+    : chat.kind !== 'direct'
       ? t('chat.members', { count: chat.memberIds.length })
       : peerSubtitle(peer, t, i18n.language, true, absences);
 
@@ -292,6 +295,8 @@ function MessageRow({
         )}
         {m.kind === 'task' && m.task ? (
           <TaskCard task={m.task} />
+        ) : m.kind === 'article' && m.article ? (
+          <ArticleCard article={m.article} />
         ) : (
           <>
             {!!m.text && (
@@ -379,6 +384,41 @@ function TaskCard({ task }: { task: NonNullable<ChatMessage['task']> }) {
   );
 }
 
+function ArticleCard({ article }: { article: NonNullable<ChatMessage['article']> }) {
+  const { t } = useTranslation();
+  const palette = usePalette();
+  const content = (
+    <>
+      <View className="absolute bottom-0 left-0 top-0 w-[2.5px] bg-tone-violet" />
+      <View className="flex-row items-center gap-[6px]">
+        <BookIcon size={12} color={palette['tone-violet']} />
+        <Text className="font-semibold text-[10px] uppercase tracking-[1.2px] text-tone-violet">
+          {t('chat.articleFromKb')}
+        </Text>
+      </View>
+      <Text
+        className={`mt-[6px] font-medium text-[13.5px] tracking-[-0.1px] ${article.id ? 'text-text' : 'text-dim'}`}
+      >
+        {article.title ?? t('chat.articleHidden')}
+      </Text>
+    </>
+  );
+  const box =
+    'relative mt-1 overflow-hidden rounded-11 border border-line bg-surface py-[10px] pl-[14px] pr-3';
+  return article.id ? (
+    <Pressable
+      accessibilityRole="link"
+      accessibilityLabel={`${t('chat.openArticle')}: ${article.title}`}
+      onPress={() => router.push(`/knowledge/${article.id}`)}
+      className={`${box} active:opacity-80`}
+    >
+      {content}
+    </Pressable>
+  ) : (
+    <View className={box}>{content}</View>
+  );
+}
+
 function Composer({ chat }: { chat: ChatSummary }) {
   const { t } = useTranslation();
   const palette = usePalette();
@@ -386,6 +426,8 @@ function Composer({ chat }: { chat: ChatSummary }) {
   const [text, setText] = useState('');
   const mentions = useMentions(chat.memberIds, text, setText);
   const sheet = useRef<BottomSheetModal>(null);
+  const articleSheet = useRef<BottomSheetModal>(null);
+  const { can } = useCan();
   // В мобильном макете и в канале — «Сообщение…»
   const placeholder = t('chat.placeholderDirect');
   const clean = text.trim();
@@ -435,17 +477,32 @@ function Composer({ chat }: { chat: ChatSummary }) {
             <PaperclipIcon size={17} color={palette.faint} />
           </Pressable>
         </Tooltip>
-        <Tooltip content={t('chat.attachTask')}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('chat.attachTask')}
-            onPress={() => sheet.current?.present()}
-            hitSlop={4}
-            className={iconButton}
-          >
-            <TasksIcon size={17} color={palette.faint} />
-          </Pressable>
-        </Tooltip>
+        {can('tasks.view') && (
+          <Tooltip content={t('chat.attachTask')}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('chat.attachTask')}
+              onPress={() => sheet.current?.present()}
+              hitSlop={4}
+              className={iconButton}
+            >
+              <TasksIcon size={17} color={palette.faint} />
+            </Pressable>
+          </Tooltip>
+        )}
+        {can('knowledge.view') && (
+          <Tooltip content={t('chat.attachArticle')}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('chat.attachArticle')}
+              onPress={() => articleSheet.current?.present()}
+              hitSlop={4}
+              className={iconButton}
+            >
+              <BookIcon size={17} color={palette.faint} />
+            </Pressable>
+          </Tooltip>
+        )}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t('chat.send')}
@@ -458,6 +515,12 @@ function Composer({ chat }: { chat: ChatSummary }) {
           <SendIcon size={17} color={palette.info} />
         </Pressable>
       </View>
+      <ArticlePickerSheet
+        sheetRef={articleSheet}
+        onPick={(article) =>
+          send.mutate({ chatId: chat.id, message: { kind: 'article', text: '', article } })
+        }
+      />
       <TaskPickerSheet
         sheetRef={sheet}
         onPick={(task) =>

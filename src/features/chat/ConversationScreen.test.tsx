@@ -1,4 +1,5 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react-native';
+import { router } from 'expo-router';
 import { fakeApi } from '@/test/fakeApi';
 import { renderScreen } from '@/test/render';
 import { ConversationScreen } from './ConversationScreen';
@@ -120,4 +121,43 @@ it('does not suggest myself', async () => {
   expect(list.getByRole('button', { name: 'Нурлан Бакиров' })).toBeTruthy();
   expect(list.getByRole('button', { name: 'Дамира Токтосунова' })).toBeTruthy();
   expect(list.queryByRole('button', { name: 'Айбек Дуйшеев' })).toBeNull();
+});
+
+function withArticles(permissions: string[]) {
+  return fakeApi(
+    {
+      'GET /chat/chats': [chat],
+      'GET /chat/members': members,
+      'GET /chat/chats/5/messages': [
+        {
+          ...message,
+          id: 102,
+          kind: 'article',
+          text: '',
+          article: { id: 'akkreditaciia', title: 'Порядок аккредитации' },
+        },
+        { ...message, id: 103, kind: 'article', text: '', article: { id: null, title: null } },
+      ],
+      'POST /chat/chats/5/read': null,
+      'GET /chat/unread': { total: 0 },
+    },
+    permissions as never,
+  );
+}
+
+it('shows article cards and hides closed articles', async () => {
+  withArticles(['chat.use', 'knowledge.view']);
+  await renderScreen(<ConversationScreen chatId="5" />);
+  await fireEvent.press(await screen.findByLabelText('Открыть статью: Порядок аккредитации'));
+  expect(router.push).toHaveBeenCalledWith('/knowledge/akkreditaciia');
+  expect(screen.getByText('Статья из закрытого раздела')).toBeTruthy();
+  expect(screen.getByLabelText('Прикрепить статью')).toBeTruthy();
+});
+
+it('offers attachments only with the rights to them', async () => {
+  withArticles(['chat.use']);
+  await renderScreen(<ConversationScreen chatId="5" />);
+  await screen.findByText('Порядок аккредитации');
+  expect(screen.queryByLabelText('Прикрепить статью')).toBeNull();
+  expect(screen.queryByLabelText('Прикрепить задачу')).toBeNull();
 });

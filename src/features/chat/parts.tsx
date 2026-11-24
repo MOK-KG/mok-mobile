@@ -1,9 +1,10 @@
 import type { TFunction } from 'i18next';
 import { Text, View } from 'react-native';
 import { type Absence, absenceOf, isAbsentOn } from '@/features/tasks/absences';
-import { Avatar } from '@/features/tasks/parts';
+import { Avatar, usePalette } from '@/features/tasks/parts';
 import { formatInBishkek, formatIsoDate } from '@/shared/lib/date';
 import { addDays, type IsoDate, todayInBishkek } from '@/shared/lib/workDays';
+import { GroupIcon } from '@/shared/ui/icons';
 import { useChatMembers } from './api';
 import type { Chat, ChatMember, ChatMessage } from './types';
 
@@ -67,7 +68,9 @@ export function previewOf(
   const body =
     message.kind === 'task'
       ? `${t('chat.taskFromBoard')}: ${message.task?.title ?? ''}`
-      : message.text || message.file?.name || '';
+      : message.kind === 'article'
+        ? `${t('chat.articleFromKb')}: ${message.article?.title ?? t('chat.articleHidden')}`
+        : message.text || message.file?.name || '';
   if (message.authorId === me) return `${t('chat.you')}: ${body}`;
   if (chat.kind === 'channel' && message.authorId) {
     const first = members[message.authorId]?.name.split(' ')[0];
@@ -79,8 +82,19 @@ export function previewOf(
 /** Значок переписки: «#» у канала, инициалы собеседника у личной */
 export function ChatBadge({ chat, size = 40 }: { chat: Chat; size?: number }) {
   const members = useChatMembers();
+  const palette = usePalette();
   const peer = chat.peerId ? members[chat.peerId] : undefined;
   if (chat.kind === 'direct' && peer) return <Avatar person={peer} size={size} />;
+  if (chat.kind === 'group') {
+    return (
+      <View
+        style={{ width: size, height: size }}
+        className={`items-center justify-center bg-surface ${size > 32 ? 'rounded-11' : 'rounded-8'}`}
+      >
+        <GroupIcon size={size * 0.45} color={palette.faint} />
+      </View>
+    );
+  }
   return (
     <View
       style={{ width: size, height: size }}
