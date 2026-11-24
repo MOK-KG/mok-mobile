@@ -23,6 +23,7 @@ export type JournalAction =
   | 'roleChanged'
   | 'userInvited'
   | 'userDeactivated'
+  | 'userReactivated'
   | 'absenceCreated'
   | 'absenceCancelled'
   | 'sessionEnded'
@@ -41,6 +42,8 @@ export type JournalAction =
   | 'documentBounced'
   | 'journalExported'
   | 'sessionEnded'
+  | 'mailboxConnected'
+  | 'mailboxDisconnected'
   | 'rolePermissionsChanged';
 
 /** Группы действий — для фильтра на экране журнала */
@@ -50,6 +53,7 @@ export const journalGroups = {
     'roleChanged',
     'userInvited',
     'userDeactivated',
+    'userReactivated',
     'sessionEnded',
     'rolePermissionsChanged',
     'absenceCreated',
@@ -58,6 +62,8 @@ export const journalGroups = {
   tasks: [
     'mailRejected',
     'mailAccepted',
+    'mailboxConnected',
+    'mailboxDisconnected',
     'mailLinked',
     'taskCreated',
     'taskAssigned',

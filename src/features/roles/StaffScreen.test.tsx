@@ -149,6 +149,35 @@ it('dismisses after the second press', async () => {
   );
 });
 
+it('reinstates a dismissed employee after the second press', async () => {
+  const dismissed = {
+    ...members[0],
+    status: 'deactivated',
+    sessions: 0,
+    deactivatedAt: '2026-11-20',
+    deactivatedBy: 'А. Турсунов',
+  };
+  const calls = setup({
+    'GET /staff/members': { members: [dismissed, ...members.slice(1)] },
+    'POST /staff/members/s-nb/reactivate': { ...members[0] },
+  });
+  await renderScreen(<StaffScreen staffId="s-nb" />);
+  expect(
+    await screen.findByText(
+      'Вход откроется с ролью R5 Сотрудник департамента. Задачи, переданные при увольнении, останутся у преемника.',
+    ),
+  ).toBeTruthy();
+  expect(screen.queryByText('Деактивировать')).toBeNull();
+  await fireEvent.press(screen.getByText('Вернуть сотрудника'));
+  expect(calls.some((c) => c.path.endsWith('/reactivate'))).toBe(false);
+  await fireEvent.press(screen.getByText('Да, вернуть Н. Бакиров'));
+  await waitFor(() =>
+    expect(
+      calls.some((c) => c.method === 'POST' && c.path === '/staff/members/s-nb/reactivate'),
+    ).toBe(true),
+  );
+});
+
 it('assigns a role to a user waiting for one', async () => {
   const calls = setup();
   await renderScreen(<StaffScreen staffId="s-dt" />);

@@ -13,6 +13,7 @@ import {
   useDeactivate,
   useEndSession,
   useMemberSessions,
+  useReactivate,
   useStaff,
 } from './api';
 import { RoleChip, StaffAvatar, StatusBadge } from './parts';
@@ -20,7 +21,7 @@ import { SessionList } from './SessionList';
 
 const caps = 'font-semibold text-[10px] uppercase tracking-[1.4px] text-dim';
 
-/** Карточка сотрудника: сведения, смена роли (roles.assign), увольнение (staff.deactivate) */
+/** Карточка сотрудника: сведения, смена роли (roles.assign), увольнение и возврат (staff.deactivate) */
 export function StaffScreen({ staffId }: { staffId: string }) {
   const { t } = useTranslation();
   const staff = useStaff();
@@ -166,6 +167,7 @@ function Body({ m }: { m: StaffRow }) {
           <Text className="mt-1 font-regular text-[12.5px] leading-[18px] text-sub">
             {t('access.deactivatedText')}
           </Text>
+          {can('staff.deactivate') && <Reinstate m={m} />}
         </View>
       )}
 
@@ -173,6 +175,47 @@ function Body({ m }: { m: StaffRow }) {
 
       {active && can('staff.deactivate') && <Dismissal m={m} />}
     </ScrollView>
+  );
+}
+
+function Reinstate({ m }: { m: StaffRow }) {
+  const { t } = useTranslation();
+  const reactivate = useReactivate();
+  const [confirming, setConfirming] = useState(false);
+  const role = m.role ? `${m.role} ${t(`access.roles.${m.role}`)}` : t('access.chooseRole');
+  return (
+    <View className="mt-3 gap-2">
+      <Text className="font-regular text-[11.5px] text-faint">
+        {t('access.reactivateHint', { role })}
+      </Text>
+      <Pressable
+        accessibilityRole="button"
+        disabled={reactivate.isPending}
+        onPress={() =>
+          confirming
+            ? reactivate.mutate(m.id, { onSettled: () => setConfirming(false) })
+            : setConfirming(true)
+        }
+        className={`h-11 items-center justify-center rounded-9 ${
+          confirming ? 'bg-brand-red' : 'border border-line bg-panel'
+        } ${reactivate.isPending ? 'opacity-50' : ''}`}
+      >
+        <Text
+          className={`font-semibold text-[13.5px] ${confirming ? 'text-[#FFFFFF]' : 'text-text'}`}
+        >
+          {confirming ? t('access.confirmReactivate', { name: m.short }) : t('access.reactivate')}
+        </Text>
+      </Pressable>
+      {confirming && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setConfirming(false)}
+          className="h-11 items-center justify-center rounded-9 border border-line"
+        >
+          <Text className="font-medium text-[13.5px] text-sub">{t('access.cancel')}</Text>
+        </Pressable>
+      )}
+    </View>
   );
 }
 
