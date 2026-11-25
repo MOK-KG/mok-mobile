@@ -4,7 +4,12 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { useCan, useMe } from '@/features/auth';
-import { type Absence, type AbsenceKind, absenceKinds } from '@/features/tasks/absences';
+import {
+  type Absence,
+  type AbsenceKind,
+  absenceKinds,
+  currentAbsences,
+} from '@/features/tasks/absences';
 import { Avatar, Choices, DueField } from '@/features/tasks/parts';
 import type { Person } from '@/features/tasks/types';
 import { themes } from '@/shared/config/tokens';
@@ -19,6 +24,7 @@ import {
   useAbsences,
   useCancelAbsence,
   useCreateAbsence,
+  useUpdateAbsence,
 } from './api';
 
 function useMePerson(staff: Person[]): Person {
@@ -51,6 +57,7 @@ export function AbsencesScreen() {
   const me = useMePerson(staff);
   const [creating, setCreating] = useState(false);
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
   const date = (d: IsoDate) => formatIsoDate(d, 'd MMM', i18n.language).replace('.', '');
 
   return (
@@ -116,20 +123,40 @@ export function AbsencesScreen() {
                         })}
                       </Text>
                     )}
+                    {canCancel && editing === a.id && (
+                      <AbsenceForm
+                        canManage={false}
+                        staff={staff}
+                        me={a.person}
+                        editing={a}
+                        onDone={() => setEditing(null)}
+                      />
+                    )}
                     {canCancel &&
+                      editing !== a.id &&
                       (cancelling === a.id ? (
                         <CancelForm absence={a} onDone={() => setCancelling(null)} />
                       ) : (
-                        <Pressable
-                          accessibilityRole="button"
-                          onPress={() => setCancelling(a.id)}
-                          hitSlop={6}
-                          className="self-start"
-                        >
-                          <Text className="font-medium text-[12.5px] text-info">
-                            {t('absences.cancel')}
-                          </Text>
-                        </Pressable>
+                        <View className="flex-row gap-5">
+                          <Pressable
+                            accessibilityRole="button"
+                            onPress={() => setEditing(a.id)}
+                            hitSlop={6}
+                          >
+                            <Text className="font-medium text-[12.5px] text-info">
+                              {t('absences.edit')}
+                            </Text>
+                          </Pressable>
+                          <Pressable
+                            accessibilityRole="button"
+                            onPress={() => setCancelling(a.id)}
+                            hitSlop={6}
+                          >
+                            <Text className="font-medium text-[12.5px] text-info">
+                              {t('absences.cancel')}
+                            </Text>
+                          </Pressable>
+                        </View>
                       ))}
                   </View>
                 );
@@ -199,34 +226,41 @@ function AbsenceForm({
   canManage,
   staff,
   me,
+  editing,
   onDone,
 }: {
   canManage: boolean;
   staff: Person[];
   me: Person;
+  editing?: Absence;
   onDone: () => void;
 }) {
   const { t } = useTranslation();
   const palette = themes[useTheme().theme];
   const create = useCreateAbsence();
+  const update = useUpdateAbsence();
   const problemText = useProblemText();
   const today = todayInBishkek();
-  const [kind, setKind] = useState<AbsenceKind>('vacation');
+  const [kind, setKind] = useState<AbsenceKind>(editing?.kind ?? 'vacation');
   const [personId, setPersonId] = useState(me.id);
-  const [from, setFrom] = useState<IsoDate>(today);
-  const [to, setTo] = useState<IsoDate>(today);
-  const [deputyId, setDeputyId] = useState<string | null>(null);
-  const [note, setNote] = useState('');
+  const [from, setFrom] = useState<IsoDate>(editing?.from ?? today);
+  const [to, setTo] = useState<IsoDate>(editing?.to ?? today);
+  const [deputyId, setDeputyId] = useState<string | null>(editing?.deputy.id ?? null);
+  const [note, setNote] = useState(editing?.note ?? '');
+  const started = editing ? diffDays(editing.from, today) > 0 : false;
   const [tried, setTried] = useState(false);
   const person = staff.find((p) => p.id === personId) ?? me;
   const deputy = staff.find((p) => p.id === deputyId) ?? null;
   const input = { kind, person, from, to, deputy, note };
-  const problems = absenceProblems(input);
+  const others = editing ? currentAbsences().filter((a) => a.id !== editing.id) : undefined;
+  const problems = absenceProblems(input, others).filter(
+    (p) => !(started && p.code === 'past' && diffDays(today, to) >= 0),
+  );
   const shown = problems.filter((p) => tried || p.code !== 'deputyRequired');
 
   return (
     <View className="gap-3 rounded-14 border border-line bg-panel p-4">
-      <Text className={caps}>{t('absences.new')}</Text>
+      <Text className={caps}>{t(editing ? 'absences.editTitle' : 'absences.new')}</Text>
       <Choices
         label={t('absences.kindLabel')}
         value={kind}
@@ -246,9 +280,11 @@ function AbsenceForm({
           />
         </Field>
       )}
-      <Field label={t('absences.from')}>
-        <DueField label={t('absences.from')} value={from} onChange={setFrom} />
-      </Field>
+      {!started && (
+        <Field label={t('absences.from')}>
+          <DueField label={t('absences.from')} value={from} onChange={setFrom} />
+        </Field>
+      )}
       <Field label={t('absences.to')}>
         <DueField label={t('absences.to')} value={to} onChange={setTo} />
       </Field>
@@ -290,10 +326,12 @@ function AbsenceForm({
           grow
           primary
           label={t('absences.save')}
-          disabled={create.isPending}
+          disabled={create.isPending || update.isPending}
           onPress={() => {
             setTried(true);
-            if (problems.length === 0) create.mutate(input, { onSuccess: onDone });
+            if (problems.length > 0) return;
+            if (editing) update.mutate({ id: editing.id, input }, { onSuccess: onDone });
+            else create.mutate(input, { onSuccess: onDone });
           }}
         />
       </View>
