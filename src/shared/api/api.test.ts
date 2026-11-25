@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { api } from './client';
 import { openProtectedFile } from './download';
 import { sessionToken } from './token';
@@ -107,14 +108,25 @@ describe('toUpload', () => {
 describe('openProtectedFile', () => {
   it('downloads with the token and opens the share sheet', async () => {
     sessionToken.set('abc');
-    mockDownload.downloadAsync.mockResolvedValue({ uri: 'file:///cache/downloads/report.pdf' });
-    await openProtectedFile('https://api.test/file/1', 'report.pdf');
+    mockDownload.downloadAsync.mockResolvedValue({ uri: 'file:///cache/downloads/smeta.xlsx' });
+    await openProtectedFile('https://api.test/file/1', 'smeta.xlsx');
     expect(File.createDownloadTask).toHaveBeenCalledWith(
       'https://api.test/file/1',
       expect.anything(),
       { headers: { Authorization: 'Bearer abc' } },
     );
-    expect(Sharing.shareAsync).toHaveBeenCalledWith('file:///cache/downloads/report.pdf');
+    expect(Sharing.shareAsync).toHaveBeenCalledWith('file:///cache/downloads/smeta.xlsx');
+  });
+
+  it('opens a PDF in the in-app preview instead of the share sheet', async () => {
+    jest.mocked(Sharing.shareAsync).mockClear();
+    mockDownload.downloadAsync.mockResolvedValue({ uri: 'file:///cache/downloads/report.pdf' });
+    await openProtectedFile('https://api.test/file/2', 'report.pdf');
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/file-preview',
+      params: { uri: 'file:///cache/downloads/report.pdf', name: 'report.pdf' },
+    });
+    expect(Sharing.shareAsync).not.toHaveBeenCalled();
   });
 
   it('strips path separators from the server file name', async () => {
