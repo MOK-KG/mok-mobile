@@ -44,6 +44,7 @@ export function AbsencesScreen() {
   const { t, i18n } = useTranslation();
   const { can } = useCan();
   const canManage = can('staff.manage') || can('tasks.assign');
+  const canRequest = canManage || can('absences.request');
   const today = todayInBishkek();
   const list = useAbsences().data ?? [];
   const staff = useAbsencePeople().data ?? [];
@@ -67,7 +68,7 @@ export function AbsencesScreen() {
             onDone={() => setCreating(false)}
           />
         ) : (
-          <Btn primary label={t('absences.new')} onPress={() => setCreating(true)} />
+          canRequest && <Btn primary label={t('absences.new')} onPress={() => setCreating(true)} />
         )}
         {groups.map((g) => {
           const items = list

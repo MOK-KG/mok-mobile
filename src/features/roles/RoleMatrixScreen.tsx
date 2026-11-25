@@ -22,6 +22,7 @@ const groupTitle: Record<string, string> = {
   roles: 'sections.access',
   journal: 'journal.title',
   assistant: 'assistant.title',
+  absences: 'absences.title',
 };
 
 const caps = 'font-semibold text-[10px] uppercase tracking-[1.4px] text-dim';
