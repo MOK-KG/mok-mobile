@@ -1,4 +1,5 @@
 import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { Linking, Text, View } from 'react-native';
 import { type Absence, absenceOf, isAbsentOn } from '@/features/tasks/absences';
 import { Avatar, usePalette } from '@/features/tasks/parts';
@@ -82,10 +83,23 @@ export function previewOf(
 
 /** Значок переписки: «#» у канала, инициалы собеседника у личной */
 export function ChatBadge({ chat, size = 40 }: { chat: Chat; size?: number }) {
+  const { t } = useTranslation();
   const members = useChatMembers();
   const palette = usePalette();
   const peer = chat.peerId ? members[chat.peerId] : undefined;
-  if (chat.kind === 'direct' && peer) return <Avatar person={peer} size={size} />;
+  if (chat.kind === 'direct' && peer) {
+    return (
+      <View>
+        <Avatar person={peer} size={size} />
+        {peer.online && (
+          <View
+            accessibilityLabel={t('chat.online')}
+            className="absolute -bottom-px -right-px size-[11px] rounded-full border-2 border-panel bg-success"
+          />
+        )}
+      </View>
+    );
+  }
   if (chat.kind === 'group') {
     return (
       <View
