@@ -19,6 +19,7 @@ import type { RoleCode } from '@/shared/config/permissions';
 import { themes } from '@/shared/config/tokens';
 import { formatIsoDate } from '@/shared/lib/date';
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
+import { PhotoControls } from './PhotoControls';
 
 const caps = 'font-semibold text-[10px] uppercase tracking-[1.4px] text-dim';
 
@@ -53,6 +54,7 @@ export function ProfileScreen() {
             {[user.position, user.department].filter(Boolean).join(' · ')}
           </Text>
           <Text className="font-regular text-[12px] text-faint">{user.email}</Text>
+          <PhotoControls />
           {role && (
             <>
               <Text className="mt-2 font-medium text-[13px] text-text">

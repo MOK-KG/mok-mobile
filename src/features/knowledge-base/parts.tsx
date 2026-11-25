@@ -8,6 +8,7 @@ import { formatIsoDate } from '@/shared/lib/date';
 import { initials } from '@/shared/lib/text';
 import { type IsoDate, todayInBishkek } from '@/shared/lib/workDays';
 import { CheckBadgeIcon } from '@/shared/ui/icons';
+import { PersonPhoto } from '@/shared/ui/PersonPhoto';
 import type { KbFreshness } from './types';
 
 /** «3 сентября» в текущем году, «3 сентября 2025» — в другом (как в web) */
@@ -24,13 +25,14 @@ export function Avatar({ person, size }: { person: Person; size: 20 | 24 }) {
     <View
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      className={`items-center justify-center rounded-full ${tone.bg} ${size === 20 ? 'size-5' : 'size-6'}`}
+      className={`items-center justify-center overflow-hidden rounded-full ${tone.bg} ${size === 20 ? 'size-5' : 'size-6'}`}
     >
       <Text
         className={`font-semibold ${tone.text} ${size === 20 ? 'text-[8.5px]' : 'text-[9.5px]'}`}
       >
         {initials(person.name)}
       </Text>
+      <PersonPhoto id={person.id} />
     </View>
   );
 }

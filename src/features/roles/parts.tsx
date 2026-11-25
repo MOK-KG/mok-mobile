@@ -4,6 +4,7 @@ import { toneClasses } from '@/features/tasks/ui';
 import type { RoleCode } from '@/shared/config/permissions';
 import type { Tone } from '@/shared/config/tokens';
 import { initials } from '@/shared/lib/text';
+import { PersonPhoto } from '@/shared/ui/PersonPhoto';
 import type { StaffBadge } from './types';
 
 /** Цвета кода роли — как на вебе */
@@ -56,16 +57,18 @@ export function StaffAvatar({
   name,
   tone,
   size,
+  personId,
 }: {
   name: string | null;
   tone: Tone;
   size: number;
+  personId?: string | null;
 }) {
   const cls = toneClasses[tone];
   return (
     <View
       style={{ width: size, height: size }}
-      className={`items-center justify-center rounded-full ${
+      className={`items-center justify-center overflow-hidden rounded-full ${
         name ? cls.bg : 'border border-dashed border-line'
       }`}
     >
@@ -75,6 +78,7 @@ export function StaffAvatar({
       >
         {name ? initials(name) : '?'}
       </Text>
+      {name && <PersonPhoto id={personId} />}
     </View>
   );
 }

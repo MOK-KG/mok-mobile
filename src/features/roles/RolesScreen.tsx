@@ -98,7 +98,7 @@ export function RolesScreen() {
             onPress={() => router.push(`/access/${r.id}`)}
             className="flex-row items-center gap-3 bg-panel px-4 py-3 active:bg-row-highlight"
           >
-            <StaffAvatar name={r.name} tone={r.tone} size={36} />
+            <StaffAvatar name={r.name} tone={r.tone} size={36} personId={r.personId} />
             <View className="min-w-0 flex-1 gap-[3px]">
               <Text numberOfLines={1} className="font-regular text-[14px] text-text">
                 {r.name ?? t('access.vacant')}

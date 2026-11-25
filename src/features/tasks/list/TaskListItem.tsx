@@ -14,6 +14,7 @@ import {
   RescheduleIcon,
   SubtasksIcon,
 } from '@/shared/ui/icons';
+import { PersonPhoto } from '@/shared/ui/PersonPhoto';
 import { urgencyOf } from '../deadline';
 import { statusChip } from '../parts';
 import type { Task } from '../types';
@@ -129,11 +130,12 @@ export function TaskListItem({
       <View className="mt-[9px] flex-row items-center gap-[6px]">
         {task.assignee && (
           <View
-            className={`size-5 items-center justify-center rounded-full ${toneClasses[task.assignee.tone].bg}`}
+            className={`size-5 items-center justify-center overflow-hidden rounded-full ${toneClasses[task.assignee.tone].bg}`}
           >
             <Text className={`font-semibold text-[8.5px] ${toneClasses[task.assignee.tone].text}`}>
               {initials(task.assignee.name)}
             </Text>
+            <PersonPhoto id={task.assignee.id} />
           </View>
         )}
         {task.fromEmail && meta(MailSmallIcon)}

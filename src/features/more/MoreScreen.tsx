@@ -13,6 +13,7 @@ import { themes } from '@/shared/config/tokens';
 import { initials } from '@/shared/lib/text';
 import { BellIcon, LogoutIcon, PlaneIcon, SearchIcon, SettingsIcon } from '@/shared/ui/icons';
 import { LanguageSwitcher } from '@/shared/ui/LanguageSwitcher';
+import { PersonPhoto } from '@/shared/ui/PersonPhoto';
 import { sectionIcons } from '@/shared/ui/sectionIcons';
 import { TabHeader } from '@/shared/ui/TabHeader';
 import { ThemeSwitch } from '@/shared/ui/ThemeSwitch';
@@ -96,10 +97,11 @@ export function MoreScreen() {
       <ScrollView contentContainerClassName="gap-5 p-4">
         {user && (
           <View className="flex-row items-center gap-3 rounded-14 border border-line bg-panel p-4">
-            <View className="size-11 items-center justify-center rounded-full bg-tone-blue-bg">
+            <View className="size-11 items-center justify-center overflow-hidden rounded-full bg-tone-blue-bg">
               <Text className="font-semibold text-[15px] text-tone-blue">
                 {initials(user.name)}
               </Text>
+              <PersonPhoto id={user.id} />
             </View>
             <View className="min-w-0 flex-1">
               <Text className="font-semibold text-[15px] tracking-[-0.2px] text-text">

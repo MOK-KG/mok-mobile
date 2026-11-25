@@ -100,7 +100,7 @@ function Body({ m }: { m: StaffRow }) {
   return (
     <ScrollView contentContainerClassName="gap-3 px-4 pb-10 pt-2">
       <View className="items-center gap-2 rounded-14 border border-line bg-panel p-5">
-        <StaffAvatar name={m.name} tone={m.tone} size={56} />
+        <StaffAvatar name={m.name} tone={m.tone} size={56} personId={m.personId} />
         <Text className="font-semibold text-[17px] tracking-[-0.3px] text-text">
           {m.name ?? t('access.vacant')}
           {m.isMe && <Text className="font-regular text-faint"> · {t('access.you')}</Text>}

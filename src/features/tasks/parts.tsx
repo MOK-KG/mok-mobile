@@ -8,6 +8,7 @@ import { formatIsoDate, isoToLocalDate, localDateToIso } from '@/shared/lib/date
 import { initials } from '@/shared/lib/text';
 import { type IsoDate, todayInBishkek } from '@/shared/lib/workDays';
 import { CalendarMediumIcon, CheckIcon, DuplicateIcon } from '@/shared/ui/icons';
+import { PersonPhoto } from '@/shared/ui/PersonPhoto';
 import type { DueProblem } from './deadline';
 import type { Person, Task, TaskStatus } from './types';
 import { toneClasses } from './ui';
@@ -48,11 +49,12 @@ export function Avatar({ person, size = 20 }: { person: Person; size?: number })
     <View
       accessibilityLabel={person.name}
       style={{ width: size, height: size }}
-      className={`items-center justify-center rounded-full ${tone.bg}`}
+      className={`items-center justify-center overflow-hidden rounded-full ${tone.bg}`}
     >
       <Text style={{ fontSize: size * 0.36 }} className={`font-semibold ${tone.text}`}>
         {initials(person.name)}
       </Text>
+      <PersonPhoto id={person.id} />
     </View>
   );
 }
