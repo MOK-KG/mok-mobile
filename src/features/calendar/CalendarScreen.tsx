@@ -287,7 +287,12 @@ function DayCell({
         {overdue && <View className="size-[5px] rounded-full bg-danger" />}
         {mine && !overdue && <View className="size-[5px] rounded-full bg-info" />}
         {others && <View className="size-[5px] rounded-full bg-faint" />}
-        {absences.length > 0 && <View className="size-[5px] rounded-full bg-tone-cyan" />}
+        {absences.some((a) => a.kind === 'vacation') && (
+          <View className="size-[5px] rounded-full bg-tone-green" />
+        )}
+        {absences.some((a) => a.kind === 'trip') && (
+          <View className="size-[5px] rounded-full bg-tone-cyan" />
+        )}
         {type.type === 'working' && type.shortened && (
           <View className="size-[5px] rounded-full bg-warning" />
         )}
@@ -351,11 +356,26 @@ function DayDetails({ day, events }: { day: IsoDate; events: DayEvents | undefin
         <View className="pb-2">
           {absences.map((a) => (
             <View key={a.person.id} className="flex-row items-center gap-[10px] px-4 py-2">
-              <Avatar person={a.person} size={28} />
+              <View
+                className={`rounded-full border-2 ${a.kind === 'trip' ? 'border-tone-cyan' : 'border-tone-green'}`}
+              >
+                <Avatar person={a.person} size={28} />
+              </View>
               <View className="min-w-0 flex-1">
-                <Text numberOfLines={1} className="font-regular text-[13px] text-text">
-                  {a.person.name}
-                </Text>
+                <View className="flex-row items-center gap-2">
+                  <Text numberOfLines={1} className="shrink font-regular text-[13px] text-text">
+                    {a.person.name}
+                  </Text>
+                  <Text
+                    className={`rounded-[5px] px-[6px] py-[1px] font-medium text-[10.5px] ${
+                      a.kind === 'trip'
+                        ? 'bg-tone-cyan-bg text-tone-cyan'
+                        : 'bg-tone-green-bg text-tone-green'
+                    }`}
+                  >
+                    {t(`absences.kind.${a.kind}`)}
+                  </Text>
+                </View>
                 <Text numberOfLines={1} className="font-regular text-[11px] text-faint">
                   {t('dashboard.absentFrom', { from: date(a.from), to: date(a.to) })}
                   {' · '}
