@@ -1,11 +1,12 @@
 import type { TFunction } from 'i18next';
-import { Text, View } from 'react-native';
+import { Linking, Text, View } from 'react-native';
 import { type Absence, absenceOf, isAbsentOn } from '@/features/tasks/absences';
 import { Avatar, usePalette } from '@/features/tasks/parts';
 import { formatInBishkek, formatIsoDate } from '@/shared/lib/date';
 import { addDays, type IsoDate, todayInBishkek } from '@/shared/lib/workDays';
 import { GroupIcon } from '@/shared/ui/icons';
 import { useChatMembers } from './api';
+import { messageParts } from './mentions';
 import type { Chat, ChatMember, ChatMessage } from './types';
 
 /** Общие куски чата на мобильном: список переписок и сама переписка */
@@ -104,5 +105,32 @@ export function ChatBadge({ chat, size = 40 }: { chat: Chat; size?: number }) {
         #
       </Text>
     </View>
+  );
+}
+
+export function MessageText({ text }: { text: string }) {
+  return (
+    <Text className="font-regular text-[14px] leading-[20px] text-sub">
+      {messageParts(text).map((part, i) =>
+        part.kind === 'mention' ? (
+          // biome-ignore lint/suspicious/noArrayIndexKey: части текста не переставляются
+          <Text key={i} className="font-medium text-info">
+            {part.value}
+          </Text>
+        ) : part.kind === 'link' ? (
+          <Text
+            // biome-ignore lint/suspicious/noArrayIndexKey: части текста не переставляются
+            key={i}
+            accessibilityRole="link"
+            onPress={() => Linking.openURL(part.href)}
+            className="text-info underline"
+          >
+            {part.value}
+          </Text>
+        ) : (
+          part.value
+        ),
+      )}
+    </Text>
   );
 }

@@ -47,7 +47,7 @@ import {
   useSetMuted,
 } from './api';
 import { MentionSuggestions, useMentions } from './MentionSuggestions';
-import { ChatBadge, dayLabel, dayOf, peerSubtitle } from './parts';
+import { ChatBadge, dayLabel, dayOf, MessageText, peerSubtitle } from './parts';
 import { TaskPickerSheet } from './TaskPickerSheet';
 import type { ChatMessage, ChatSummary } from './types';
 
@@ -304,9 +304,7 @@ function MessageRow({
           <ArticleCard article={m.article} />
         ) : (
           <>
-            {!!m.text && (
-              <Text className="font-regular text-[14px] leading-[20px] text-sub">{m.text}</Text>
-            )}
+            {!!m.text && <MessageText text={m.text} />}
             {m.file && (
               <Pressable
                 accessibilityRole="link"

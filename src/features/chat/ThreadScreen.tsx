@@ -18,6 +18,7 @@ import { SendIcon } from '@/shared/ui/icons';
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
 import { threadsOf, useChatMembers, useChats, useMessages, useSendMessage } from './api';
 import { MentionSuggestions, useMentions } from './MentionSuggestions';
+import { MessageText } from './parts';
 import type { ChatMessage } from './types';
 
 /** Ветка ответов к сообщению канала (S-33): сообщение, ответы и поле ответа */
@@ -101,9 +102,7 @@ function Row({ message: m }: { message: ChatMessage }) {
             {formatInBishkek(m.at, 'd MMM, HH:mm', i18n.language)}
           </Text>
         </Text>
-        {!!m.text && (
-          <Text className="font-regular text-[14px] leading-[20px] text-sub">{m.text}</Text>
-        )}
+        {!!m.text && <MessageText text={m.text} />}
       </View>
     </View>
   );
