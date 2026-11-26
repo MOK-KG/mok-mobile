@@ -25,7 +25,8 @@
     "production": {
       "ios": {
         "ascAppId": "6834389664",
-        "appleTeamId": "CSJMBZC2C9"
+        "appleTeamId": "CSJMBZC2C9",
+        "metadataPath": "./store.config.js"
       }
     }
   }

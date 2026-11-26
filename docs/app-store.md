@@ -1,5 +1,17 @@
 # НОК КР — тексты для App Store Connect
 
+Тексты разделов 1–4 заполняются автоматически из `store.config.js` (EAS Metadata):
+
+```sh
+REVIEW_CONTACT_FIRST_NAME=… REVIEW_CONTACT_LAST_NAME=… REVIEW_CONTACT_EMAIL=… \
+REVIEW_CONTACT_PHONE=+996… REVIEW_DEMO_PASSWORD='пароль appreview@olympic.kg' \
+npx eas-cli metadata:push
+```
+
+Команда попросит войти Apple ID. Пароль ревью-аккаунта не хранится в репозитории — только в
+переменной на время команды. Анкету App Privacy (раздел 5), скриншоты и выбор сборки заполняют
+вручную. Если тексты поменялись — правьте `store.config.js` и этот файл вместе.
+
 Приложение `kg.olympic.nok.dev`, версия 1.0.0. Ниже — что вставить в каждое поле App Store Connect.
 Основной язык — русский, дополнительно — английский (его читает ревьюер Apple).
 
@@ -137,7 +149,7 @@ How to sign in:
 3. You return to the app signed in as a department employee.
 
 What to try:
-- Tasks tab: open a task, change its status, add a comment with a file.
+- Tasks tab: open the task "App Review — demo task", change its status and add a comment.
 - Chat tab: open "Assistant" at the top and ask "What are my tasks this week?". Actions the assistant proposes (create a task, send a message, schedule a meeting) are executed only after tapping "Create".
 - More → Knowledge base: open an article, tap "Graph" to see links between articles.
 - More → Calendar: select a day, tap "New event".
