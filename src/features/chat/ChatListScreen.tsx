@@ -7,6 +7,7 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { useCurrentAbsences } from '@/features/absences/api';
+import { BotAvatar } from '@/features/assistant/BotScreen';
 import { useCurrentPersonId } from '@/features/auth';
 import { themes } from '@/shared/config/tokens';
 import { PlusIcon, SearchIcon, XIcon } from '@/shared/ui/icons';
@@ -94,6 +95,7 @@ export function ChatListScreen() {
       <FlashList
         data={visible}
         keyExtractor={(c) => c.id}
+        ListHeaderComponent={searching ? null : <BotRow />}
         renderItem={({ item }) => (
           <ChatRow chat={item} onPress={() => router.push(`/chat/${item.id}`)} />
         )}
@@ -108,6 +110,28 @@ export function ChatListScreen() {
 
       <NewChatSheet sheetRef={sheet} onPick={openPeer} />
     </SafeAreaView>
+  );
+}
+
+function BotRow() {
+  const { t } = useTranslation();
+  return (
+    <Pressable
+      accessibilityRole="link"
+      accessibilityLabel={`${t('assistant.bot.title')}, ${t('assistant.bot.rowHint')}`}
+      onPress={() => router.push('/chat/bot')}
+      className="h-[72px] flex-row items-center gap-3 border-b border-line bg-panel px-4 active:bg-row-highlight"
+    >
+      <BotAvatar />
+      <View className="min-w-0 flex-1">
+        <Text numberOfLines={1} className="font-medium text-[15px] tracking-[-0.2px] text-text">
+          {t('assistant.bot.title')}
+        </Text>
+        <Text numberOfLines={1} className="mt-[3px] font-regular text-[13px] text-sub">
+          {t('assistant.bot.rowHint')}
+        </Text>
+      </View>
+    </Pressable>
   );
 }
 
