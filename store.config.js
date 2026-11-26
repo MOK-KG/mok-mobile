@@ -92,7 +92,7 @@ How to sign in:
 3. You return to the app signed in as a department employee.
 
 What to try:
-- Tasks tab: open the task "App Review — demo task", change its status and add a comment.
+- Tasks tab: open any task and look through its details, comments and history.
 - Chat tab: open "Assistant" at the top and ask "What are my tasks this week?". Actions the assistant proposes (create a task, send a message, schedule a meeting) are executed only after tapping "Create".
 - More → Knowledge base: open an article, tap "Graph" to see links between articles.
 - More → Calendar: select a day, tap "New event".
@@ -107,13 +107,14 @@ module.exports = {
   apple: {
     copyright: '2026 ОО «Национальный Олимпийский Комитет Кыргызской Республики»',
     categories: ['BUSINESS', 'PRODUCTIVITY'],
-    info: { ru, 'en-US': en },
+    version: '1.0.0',
+    info: process.env.STORE_WITH_EN ? { ru, 'en-US': en } : { ru },
     review: {
       firstName: process.env.REVIEW_CONTACT_FIRST_NAME || '',
       lastName: process.env.REVIEW_CONTACT_LAST_NAME || '',
       email: process.env.REVIEW_CONTACT_EMAIL || '',
       phone: process.env.REVIEW_CONTACT_PHONE || '',
-      demoUsername: 'appreview@olympic.kg',
+      demoUsername: process.env.REVIEW_DEMO_USERNAME || 'appreview@olympic.kg',
       demoPassword: process.env.REVIEW_DEMO_PASSWORD || '',
       demoRequired: true,
       notes: reviewNotes,
