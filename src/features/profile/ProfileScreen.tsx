@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { useCurrentAbsences } from '@/features/absences/api';
 import { useCan, useSession } from '@/features/auth';
+import { GoogleCalendarPanel } from '@/features/calendar/GoogleCalendarPanel';
 import {
   lockedNotificationKinds,
   type NotificationSettings,
@@ -114,6 +115,8 @@ export function ProfileScreen() {
         </View>
 
         <MySessions />
+
+        <GoogleCalendarPanel />
 
         <View className="gap-2 rounded-14 border border-line bg-panel p-4">
           <Text className={caps}>{t('absences.title')}</Text>

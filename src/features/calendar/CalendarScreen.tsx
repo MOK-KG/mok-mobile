@@ -1,7 +1,7 @@
-import { router } from 'expo-router';
+import { type Href, router, useLocalSearchParams } from 'expo-router';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { useCurrentAbsences } from '@/features/absences/api';
@@ -15,8 +15,9 @@ import { themes } from '@/shared/config/tokens';
 import { years } from '@/shared/config/workCalendar';
 import { formatIsoDate } from '@/shared/lib/date';
 import { type IsoDate, todayInBishkek } from '@/shared/lib/workDays';
-import { ChevronLeftIcon } from '@/shared/ui/icons';
+import { ChevronLeftIcon, PlusSmallIcon } from '@/shared/ui/icons';
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
+import { type CalendarEvent, eventsOn, useCancelEvent, useEvents } from './events';
 import {
   type CalendarLayer,
   calendarLayers,
@@ -49,8 +50,11 @@ export function CalendarScreen() {
   const { can } = useCan();
   const canTasks = can('tasks.view');
   const today = todayInBishkek();
-  const [selected, setSelected] = useState<IsoDate>(today);
-  const [month, setMonth] = useState(monthOf(today));
+  const params = useLocalSearchParams<{ d?: string }>();
+  const initial = params.d && /^\d{4}-\d{2}-\d{2}$/.test(params.d) ? (params.d as IsoDate) : today;
+  const [selected, setSelected] = useState<IsoDate>(initial);
+  const [month, setMonth] = useState(monthOf(initial));
+  const [showEvents, setShowEvents] = useState(true);
   const [layers, setLayers] = useState<Set<CalendarLayer>>(() => new Set(calendarLayers));
   const tasks = useTasks('department');
 
@@ -70,6 +74,15 @@ export function CalendarScreen() {
         me,
       ),
     [weeks, selected, tasks.data, absences, layers, canTasks, me],
+  );
+
+  const gridDays = weeks.flat();
+  const rangeFrom = [gridDays[0], selected].sort()[0];
+  const rangeTo = [gridDays[gridDays.length - 1], selected].sort()[1];
+  const eventList = useEvents(rangeFrom, rangeTo).data;
+  const dayEvents = useMemo(
+    () => (showEvents ? eventsOn(eventList) : new Map<IsoDate, CalendarEvent[]>()),
+    [eventList, showEvents],
   );
 
   const pick = (day: IsoDate) => {
@@ -147,6 +160,21 @@ export function CalendarScreen() {
               </Pressable>
             );
           })}
+          <Pressable
+            accessibilityRole="switch"
+            accessibilityState={{ checked: showEvents }}
+            onPress={() => setShowEvents((v) => !v)}
+            className={`h-8 flex-row items-center gap-[6px] rounded-8 border px-3 ${
+              showEvents ? 'border-transparent bg-control-active' : 'border-line bg-panel'
+            }`}
+          >
+            <View className={`size-2 rounded-full ${showEvents ? 'bg-tone-violet' : 'bg-dim'}`} />
+            <Text
+              className={`text-[12px] ${showEvents ? 'font-medium text-text' : 'font-regular text-faint'}`}
+            >
+              {t('calendar.layer.events')}
+            </Text>
+          </Pressable>
         </ScrollView>
 
         {!norm.official && (
@@ -187,6 +215,7 @@ export function CalendarScreen() {
                   today={day === today}
                   selected={day === selected}
                   events={events.get(day)}
+                  eventCount={dayEvents.get(day)?.length ?? 0}
                   onPress={() => pick(day)}
                 />
               ))}
@@ -194,7 +223,11 @@ export function CalendarScreen() {
           ))}
         </View>
 
-        <DayDetails day={selected} events={events.get(selected)} />
+        <DayDetails
+          day={selected}
+          events={events.get(selected)}
+          dayEvents={showEvents ? (dayEvents.get(selected) ?? []) : null}
+        />
         <MonthNorm month={month} norm={norm} />
       </ScrollView>
     </SafeAreaView>
@@ -229,6 +262,7 @@ function DayCell({
   today,
   selected,
   events,
+  eventCount,
   onPress,
 }: {
   day: IsoDate;
@@ -236,6 +270,7 @@ function DayCell({
   today: boolean;
   selected: boolean;
   events: DayEvents | undefined;
+  eventCount: number;
   onPress: () => void;
 }) {
   const { t, i18n } = useTranslation();
@@ -252,6 +287,7 @@ function DayCell({
     type.type === 'holiday' ? t(`holidays.${type.holiday}`) : null,
     deadlines.length ? t('calendar.deadlinesCount', { count: deadlines.length }) : null,
     absences.length ? t('calendar.absentCount', { count: absences.length }) : null,
+    eventCount ? t('calendar.eventsCount', { count: eventCount }) : null,
   ]
     .filter(Boolean)
     .join(', ');
@@ -284,6 +320,7 @@ function DayCell({
         </Text>
       </View>
       <View className="flex-row gap-[3px]">
+        {eventCount > 0 && <View className="size-[5px] rounded-full bg-tone-violet" />}
         {overdue && <View className="size-[5px] rounded-full bg-danger" />}
         {mine && !overdue && <View className="size-[5px] rounded-full bg-info" />}
         {others && <View className="size-[5px] rounded-full bg-faint" />}
@@ -301,7 +338,16 @@ function DayCell({
   );
 }
 
-function DayDetails({ day, events }: { day: IsoDate; events: DayEvents | undefined }) {
+function DayDetails({
+  day,
+  events,
+  dayEvents,
+}: {
+  day: IsoDate;
+  events: DayEvents | undefined;
+  dayEvents: CalendarEvent[] | null;
+}) {
+  const palette = themes[useTheme().theme];
   const { t, i18n } = useTranslation();
   const type = dayType(day);
   const deadlines = events?.deadlines ?? [];
@@ -331,6 +377,30 @@ function DayDetails({ day, events }: { day: IsoDate; events: DayEvents | undefin
           {typeLabel}
         </Text>
       </View>
+      {dayEvents && (
+        <>
+          <View className="flex-row items-center pr-3">
+            <View className="flex-1">
+              <SectionTitle title={t('calendar.events')} count={dayEvents.length} />
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push(`/event-new?d=${day}` as Href)}
+              hitSlop={6}
+              className="mt-2 flex-row items-center gap-1"
+            >
+              <PlusSmallIcon size={14} color={palette.info} />
+              <Text className="font-medium text-[12.5px] text-info">{t('calendar.newEvent')}</Text>
+            </Pressable>
+          </View>
+          {dayEvents.length === 0 ? (
+            <Empty text={t('calendar.noEvents')} />
+          ) : (
+            dayEvents.map((e) => <EventRow key={e.id} event={e} />)
+          )}
+          <View className="h-px bg-line" />
+        </>
+      )}
       <SectionTitle title={t('calendar.deadlines')} count={deadlines.length} />
       {deadlines.length === 0 ? (
         <Empty text={t('calendar.noDeadlines')} />
@@ -455,3 +525,64 @@ function SectionTitle({
 const Empty = ({ text }: { text: string }) => (
   <Text className="px-4 pb-3 pt-1 font-regular text-[12px] text-dim">{text}</Text>
 );
+
+function EventRow({ event: e }: { event: CalendarEvent }) {
+  const { t } = useTranslation();
+  const meId = useCurrentPersonId();
+  const cancel = useCancelEvent();
+  const people = e.attendees.map((p) => p.name).join(', ');
+  return (
+    <View className="border-t border-line px-4 py-[10px]">
+      <Text className="font-regular text-[13.5px] leading-[19px] text-text">
+        <Text className="text-faint">
+          {e.startTime ? `${e.startTime}${e.endTime ? `–${e.endTime}` : ''}` : t('calendar.allDay')}
+        </Text>
+        {'  '}
+        {e.title}
+      </Text>
+      {(e.location || people) && (
+        <Text className="mt-[3px] font-regular text-[12px] text-dim">
+          {[e.location, people].filter(Boolean).join(' · ')}
+        </Text>
+      )}
+      <View className="mt-[6px] flex-row flex-wrap items-center gap-4">
+        {e.task && (
+          <Text
+            accessibilityRole="link"
+            onPress={() => e.task && router.push(`/tasks/${e.task.id}`)}
+            className="font-medium text-[12px] text-info"
+          >
+            {e.task.code}
+          </Text>
+        )}
+        {e.googleLink ? (
+          <Text
+            accessibilityRole="link"
+            onPress={() => Linking.openURL(e.googleLink)}
+            className="font-medium text-[12px] text-info"
+          >
+            Google Calendar
+          </Text>
+        ) : null}
+        {e.source === 'google' && (
+          <Text className="font-regular text-[12px] text-dim">{t('calendar.fromGoogle')}</Text>
+        )}
+        {e.source === 'platform' && e.createdBy.id === meId && (
+          <Pressable
+            accessibilityRole="button"
+            disabled={cancel.isPending}
+            onPress={() => cancel.mutate(e.id)}
+            hitSlop={6}
+          >
+            <Text className="font-medium text-[12px] text-sub">{t('calendar.cancelEvent')}</Text>
+          </Pressable>
+        )}
+      </View>
+      {e.googleError ? (
+        <Text className="mt-[3px] font-regular text-[12px] text-warning-text">
+          {t('calendar.googleFailed')}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
