@@ -38,6 +38,14 @@ const ru = {
   ],
   supportUrl: 'https://dashboard.olympic.kg/privacy',
   privacyPolicyUrl: 'https://dashboard.olympic.kg/privacy',
+  screenshots: {
+    APP_IPHONE_61: [
+      './store/screenshots/ru/01.png',
+      './store/screenshots/ru/02.png',
+      './store/screenshots/ru/03.png',
+      './store/screenshots/ru/04.png',
+    ],
+  },
 };
 
 const en = {
