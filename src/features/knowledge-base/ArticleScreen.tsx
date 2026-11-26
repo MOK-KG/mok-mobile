@@ -16,8 +16,10 @@ import {
   EditMediumIcon,
   TasksSmallIcon,
 } from '@/shared/ui/icons';
+import { Markdown } from '@/shared/ui/Markdown';
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
 import { useArticle, useKnowledge } from './api';
+import { useArticleLinks } from './links';
 import { Avatar, capsTitle, FreshnessBadge, useShortDate } from './parts';
 import { checkedAt, freshnessOf } from './search';
 import type { KbArticle, KbBlock } from './types';
@@ -296,10 +298,15 @@ function Block({
   onLayout?: (e: { nativeEvent: { layout: { y: number } } }) => void;
 }) {
   const palette = themes[useTheme().theme];
+  const resolveLink = useArticleLinks();
   const text = 'font-regular text-[14px] leading-[22px] text-sub';
   switch (block.kind) {
     case 'paragraph':
-      return <Text className={`${text} ${first ? '' : 'mt-2'}`}>{block.text}</Text>;
+      return (
+        <View className={first ? '' : 'mt-2'}>
+          <Markdown text={block.text} resolveLink={resolveLink} />
+        </View>
+      );
     case 'heading':
       return (
         <Text

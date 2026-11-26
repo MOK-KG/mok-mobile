@@ -2,7 +2,7 @@ import { Directory, File, Paths } from 'expo-file-system';
 import { type Href, router } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
-import { isPreviewable } from '@/shared/lib/files';
+import { isMarkdown, isPreviewable } from '@/shared/lib/files';
 import { sessionToken } from './token';
 
 export async function openProtectedFile(url: string, name: string): Promise<void> {
@@ -17,7 +17,7 @@ export async function openProtectedFile(url: string, name: string): Promise<void
   });
   const file = await task.downloadAsync();
   if (!file) return;
-  if (Platform.OS === 'ios' && isPreviewable(name)) {
+  if (isMarkdown(name) || (Platform.OS === 'ios' && isPreviewable(name))) {
     router.push({ pathname: '/file-preview', params: { uri: file.uri, name } } as unknown as Href);
     return;
   }

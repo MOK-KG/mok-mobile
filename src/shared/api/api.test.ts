@@ -118,6 +118,15 @@ describe('openProtectedFile', () => {
     expect(Sharing.shareAsync).toHaveBeenCalledWith('file:///cache/downloads/smeta.xlsx');
   });
 
+  it('opens Markdown in the in-app viewer', async () => {
+    mockDownload.downloadAsync.mockResolvedValue({ uri: 'file:///cache/downloads/readme.md' });
+    await openProtectedFile('https://api.test/file/3', 'readme.md');
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/file-preview',
+      params: { uri: 'file:///cache/downloads/readme.md', name: 'readme.md' },
+    });
+  });
+
   it('opens a PDF in the in-app preview instead of the share sheet', async () => {
     jest.mocked(Sharing.shareAsync).mockClear();
     mockDownload.downloadAsync.mockResolvedValue({ uri: 'file:///cache/downloads/report.pdf' });
