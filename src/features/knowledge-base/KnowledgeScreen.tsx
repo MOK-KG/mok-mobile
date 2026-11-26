@@ -62,20 +62,30 @@ export function KnowledgeScreen() {
         title={t('sections.knowledge')}
         fallback="/more"
         right={
-          <Can permission="knowledge.edit">
-            <Tooltip content={t('knowledge.newArticle')}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t('knowledge.newArticle')}
-                onPress={() =>
-                  router.push(current ? `/knowledge/new?section=${current.id}` : '/knowledge/new')
-                }
-                className="mr-1 size-7 items-center justify-center rounded-8 bg-brand-red active:opacity-80"
-              >
-                <PlusIcon size={16} color="#FFFFFF" />
-              </Pressable>
-            </Tooltip>
-          </Can>
+          <View className="flex-row items-center gap-2">
+            <Pressable
+              accessibilityRole="link"
+              onPress={() => router.push('/knowledge/graph')}
+              hitSlop={6}
+              className="h-7 justify-center rounded-8 border border-line px-[10px]"
+            >
+              <Text className="font-medium text-[12px] text-sub">{t('knowledge.graph.title')}</Text>
+            </Pressable>
+            <Can permission="knowledge.edit">
+              <Tooltip content={t('knowledge.newArticle')}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t('knowledge.newArticle')}
+                  onPress={() =>
+                    router.push(current ? `/knowledge/new?section=${current.id}` : '/knowledge/new')
+                  }
+                  className="mr-1 size-7 items-center justify-center rounded-8 bg-brand-red active:opacity-80"
+                >
+                  <PlusIcon size={16} color="#FFFFFF" />
+                </Pressable>
+              </Tooltip>
+            </Can>
+          </View>
         }
       />
 

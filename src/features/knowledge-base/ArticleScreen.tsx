@@ -19,6 +19,7 @@ import {
 import { Markdown } from '@/shared/ui/Markdown';
 import { ScreenHeader } from '@/shared/ui/ScreenHeader';
 import { useArticle, useKnowledge } from './api';
+import { LocalGraph } from './graph/GraphScreen';
 import { useArticleLinks } from './links';
 import { Avatar, capsTitle, FreshnessBadge, useShortDate } from './parts';
 import { checkedAt, freshnessOf } from './search';
@@ -265,6 +266,11 @@ function ArticleBody({ article: a }: { article: KbArticle }) {
           </View>
         </View>
       )}
+
+      <View className={section}>
+        <Text className={`${capsTitle} mb-2`}>{t('knowledge.graph.links')}</Text>
+        <LocalGraph slug={a.id} />
+      </View>
 
       <View className={section}>
         <Text className={capsTitle}>{t('knowledge.history')}</Text>
